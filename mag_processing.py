@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    read_paper_ids(pathObj)
-    red_ref_relations(pathObj)
+    # read_paper_ids(pathObj)
+    red_ref_relations(pathObj,2016)
    
 
