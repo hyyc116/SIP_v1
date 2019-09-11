@@ -7,7 +7,7 @@ class PATH:
 
         self._field_tag = field_tag
 
-        self._field_mame = field_name
+        self._field_name = field_name
 
         ''' ==========文件列表=============='''
         ##存储文章id列表文件地址
