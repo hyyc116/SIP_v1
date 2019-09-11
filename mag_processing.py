@@ -70,7 +70,7 @@ def read_paper_ids(pathObj):
         if progress%10000000==0:
             logging.info('Read paper year， progress {}, {} paper has year ...'.format(progress,len(paper_year)))
 
-        if paper_id in paper_ids:
+        if paper_id in paper_ids_set:
 
             paper_year[paper_id] = year
 
