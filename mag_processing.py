@@ -102,7 +102,7 @@ def red_ref_relations(pathObj,cut_year):
 
         progress+=1
 
-        if progress&100000000==0:
+        if progress%100000000==0:
             logging.info('progress {:}, {} ref realtions saved.'.format(progress,total_num))
 
         if int(paper_year.get(paper_id,9999))<=cut_year and int(paper_year.get(paper_reference_id,9999))<=cut_year:
