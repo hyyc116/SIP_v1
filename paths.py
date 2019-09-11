@@ -21,7 +21,8 @@ class PATH:
         ### 随时间的文章数量变化曲线
         self._field_paper_num_dis_over_time_fig = 'fig/paper_num_dis_over_time_{}.png'.format(self._field_tag)
 
-
+        ### 2016年前论文引用次数分布
+        self._field_citation_dis_fig = 'fig/citation_dis_{}.png'.format(self._field_tag)
 
 
 

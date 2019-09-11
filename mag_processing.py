@@ -121,6 +121,49 @@ def red_ref_relations(pathObj,cut_year):
     ref_relation_file.close()
     logging.info('{} ref relations saved to {}'.format(total_num,pathObj._paper_ref_relation_path))
 
+def plot_citation_distribution(pathObj):
+
+    pid_citnum = defaultdict(int)
+    for line in open(pathObj._paper_ref_relation_path):
+
+        line = line.strip()
+
+        citing_pid,cited_pid = line.split(',')
+
+        pid_citnum[cited_pid]+=1
+
+    logging.info('{} papers has citations.'.format(len(pid_citnum)))
+
+    xs = []
+    ys = []
+
+    citnum_counter = Counter(pid_citnum.values())
+
+    for num in sorted(citnum_counter.keys()):
+
+        xs.append(num)
+        ys.append(citnum_counter[num]/float(len(pid_citnum)))
+
+
+    plt.figure(figsize=(4,3))
+
+    plt.plot(xs,ys,'o',filltype='none')
+
+    plt.xscale('log')
+
+    plt.yscale('log')
+
+    plt.xlabel('number of citations')
+
+    plt.ylabel('percentage of papers')
+
+    plt.tight_layout()
+
+    plt.savefig(pathObj._field_citation_dis_fig,dpi=300)
+
+    logging.info('citation distribution saved to {}'.format(pathObj._field_citation_dis_fig))
+
+
 
 def read_paper_authors():
     ## 根据得到的id列表，从mag_core.paper_author_affiliations 存储的是每一篇论文对应的作者的id以及作者顺序
@@ -184,6 +227,8 @@ if __name__ == '__main__':
     pathObj = PATH(field,tag)
 
     # read_paper_ids(pathObj)
-    red_ref_relations(pathObj,2016)
+    # red_ref_relations(pathObj,2016)
+
+    plot_citation_distribution(pathObj)
    
 
