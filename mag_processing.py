@@ -105,6 +105,12 @@ def red_ref_relations(pathObj,cut_year):
         if progress%100000000==0:
             logging.info('progress {:}, {} ref realtions saved.'.format(progress,total_num))
 
+        if int(paper_year.get(paper_id,9999))<1970:
+            continue
+
+        if int(paper_year.get(paper_reference_id,9999))<1970:
+            continue
+
         if int(paper_year.get(paper_id,9999))<=cut_year and int(paper_year.get(paper_reference_id,9999))<=cut_year:
             cit_relation = '{},{}'.format(paper_id,paper_reference_id)
             cit_relations.append(cit_relation)
@@ -116,6 +122,7 @@ def red_ref_relations(pathObj,cut_year):
                 cit_relations = []
 
     if len(cit_relations)>0:
+        total_num+=len(cit_relations)
         ref_relation_file.write('\n'.join(cit_relations)+'\n')
 
     ref_relation_file.close()
@@ -167,33 +174,32 @@ def plot_citation_distribution(pathObj):
     logging.info('citation distribution saved to {}'.format(pathObj._field_citation_dis_fig))
 
 
-
-def read_paper_authors():
-    ## 根据得到的id列表，从mag_core.paper_author_affiliations 存储的是每一篇论文对应的作者的id以及作者顺序
+## 获得文章的作者信息
+def read_paper_authors(pathObj):
+    ## 文章 年份
+    paper_year = pathObj.paper_year
     progress = 0
-
     author_papers = defaultdict(list)
     paper_authors = defaultdict(list)
-    sql = 'select paper_id,author_id,author_sequence_number from mag_core.paper_author_affiliations'
-    for paper_id,author_id,author_sequence_number in query_op.query_database(sql):
+
+    lines = ['paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year']
+    sql = 'select paper_id,mag_core.authors.author_id,mag_core.authors.normalized_name,mag_core.affiliations.affiliation_id,mag_core.affiliations.normalized_name,author_sequence_number from mag_core.paper_author_affiliations,mag_core.authors,mag_core.affiliations where mag_core.paper_author_affiliations.author_id=mag_core.authors.author_id and mag_core.paper_author_affiliations.affiliation_id=mag_core.affiliations.affiliation_id'
+    for paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number in query_op.query_database(sql):
 
         progress+=1
-
         if progress%10000000==0:
             print('read author id {} ...'.format(progress))
 
-        if paper_fields.get(paper_id,None) is None:
+        pub_year = int(paper_year.get(paper_id,9999))
+        if pub_year > 2016 or pub_year < 1970:
             continue
 
-        author_papers[author_id].append([paper_id,author_sequence_number])
-        paper_authors[paper_id].append([author_id,author_sequence_number])
+        line = '{},{},{},{},{},{},{}'.format(paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year)
 
-    print('There are {} authors in this field..'.format(len(author_papers)))
-    open('data/mag_{}_author_papers.json'.format(tag),'w').write(json.dumps(author_papers))
-    print('author papers json saved to data/mag_{}_author_papers.json'.format(tag))
-    open('data/mag_{}_paper_authors.json'.format(tag),'w').write(json.dumps(paper_authors))
-    print('author papers json saved to data/mag_{}_paper_authors.json'.format(tag))
-    print('Done')
+        lines.append(line)
+
+    open(pathObj._paper_author_aff_path,'w').write('\n'.join(lines))
+    logging.info("paper author affiliations saved to {}.".format(pathObj._paper_author_aff_path))
 
 
 # 画出随着时间的文章数量变化曲线
@@ -202,6 +208,13 @@ def plot_paper_year_dis(year_dis,outfig):
     ys = []
 
     for x in sorted(year_dis.keys()):
+
+        if x<1970:
+            continue
+
+        if x>2016:
+            continue
+
         xs.append(x)
         ys.append(year_dis[x])
 
@@ -219,7 +232,7 @@ def plot_paper_year_dis(year_dis,outfig):
 
     plt.savefig(outfig,dpi=400)
 
-    print('Fig saved to {}'.format(outfig))
+    logging.info('{} papers,Fig saved to {}'.format(np.sum(ys),outfig))
 
 
 
@@ -229,9 +242,11 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    # read_paper_ids(pathObj)
-    # red_ref_relations(pathObj,2016)
+    read_paper_ids(pathObj)
+    red_ref_relations(pathObj,2016)
 
     plot_citation_distribution(pathObj)
+
+    read_paper_authors(pathObj)
    
 

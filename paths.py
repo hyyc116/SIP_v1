@@ -17,6 +17,10 @@ class PATH:
         ## 存储参考关系的文件地址
         self._paper_ref_relation_path = 'data/paper_ref_relations_{}.txt'.format(self._field_tag)
 
+        ##文章，作者，机构关系地址
+        self._paper_author_aff_path = 'data/paper_author_aff_{}.txt'.format(self._field_tag)
+
+
         ''' ============== 图片列表 =========='''
         ### 随时间的文章数量变化曲线
         self._field_paper_num_dis_over_time_fig = 'fig/paper_num_dis_over_time_{}.png'.format(self._field_tag)
