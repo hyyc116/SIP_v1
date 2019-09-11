@@ -124,6 +124,7 @@ def red_ref_relations(pathObj,cut_year):
 def plot_citation_distribution(pathObj):
 
     pid_citnum = defaultdict(int)
+    pids = []
     for line in open(pathObj._paper_ref_relation_path):
 
         line = line.strip()
@@ -132,13 +133,15 @@ def plot_citation_distribution(pathObj):
 
         pid_citnum[cited_pid]+=1
 
-    logging.info('{} papers has citations.'.format(len(pid_citnum)))
+        pids.append(citing_pid)
+        pids.append(cited_pid)
+
+    logging.info('{} papers published till 2016,{} papers has citations.'.format(len(set(pids)),len(pid_citnum)))
 
     xs = []
     ys = []
 
     citnum_counter = Counter(pid_citnum.values())
-
     for num in sorted(citnum_counter.keys()):
 
         xs.append(num)
@@ -147,7 +150,7 @@ def plot_citation_distribution(pathObj):
 
     plt.figure(figsize=(4,3))
 
-    plt.plot(xs,ys,'o',filltype='none')
+    plt.plot(xs,ys,'o',fillstyle='none')
 
     plt.xscale('log')
 
