@@ -62,6 +62,7 @@ def read_paper_ids(pathObj):
     paper_year = {}
     progress = 0
     year_dis = defaultdict(int)
+    logging.info('starting to read paper years ...')
     for paper_id,year in query_op.query_database(sql):
 
         progress+=1
