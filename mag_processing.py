@@ -90,7 +90,7 @@ def red_ref_relations(pathObj,cut_year):
     ##目标ID列表
     paper_year = pathObj.paper_year
     ## 参考关系存放文件
-    ref_relation_file = open(pathObj._paper_ref_relation_path,'a')
+    ref_relation_file = open(pathObj._paper_ref_relation_path,'a+')
 
     sql = 'select paper_id,paper_reference_id from mag_core.paper_references'
     cit_relations = []
