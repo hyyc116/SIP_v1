@@ -182,6 +182,8 @@ def read_paper_authors(pathObj):
     author_papers = defaultdict(list)
     paper_authors = defaultdict(list)
 
+    query_op = dbop()
+    
     lines = ['paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year']
     sql = 'select paper_id,mag_core.authors.author_id,mag_core.authors.normalized_name,mag_core.affiliations.affiliation_id,mag_core.affiliations.normalized_name,author_sequence_number from mag_core.paper_author_affiliations,mag_core.authors,mag_core.affiliations where mag_core.paper_author_affiliations.author_id=mag_core.authors.author_id and mag_core.paper_author_affiliations.affiliation_id=mag_core.affiliations.affiliation_id'
     for paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number in query_op.query_database(sql):
@@ -242,7 +244,7 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    read_paper_ids(pathObj)
+    # read_paper_ids(pathObj)
     red_ref_relations(pathObj,2016)
 
     plot_citation_distribution(pathObj)
