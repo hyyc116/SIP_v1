@@ -150,7 +150,7 @@ def read_paper_authors():
 
 
 # 画出随着时间的文章数量变化曲线
-def plot_paper_year_dis(year_dis,outfig)
+def plot_paper_year_dis(year_dis,outfig):
     xs = []
     ys = []
 
