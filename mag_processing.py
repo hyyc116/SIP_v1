@@ -72,7 +72,7 @@ def read_paper_ids(pathObj):
 
         if paper_id in paper_ids_set:
 
-            paper_year[paper_id] = year
+            paper_year[paper_id] = int(year)
 
             year_dis[int(year)]+=1
 
@@ -105,7 +105,7 @@ def red_ref_relations(pathObj,cut_year):
         if progress&100000000==0:
             logging.info('progress {:}, {} ref realtions saved.'.format(progress,total_num))
 
-        if paper_year.get(paper_id,9999)<=cut_year and paper_year.get(paper_reference_id,9999)<=cut_year:
+        if int(paper_year.get(paper_id,9999))<=cut_year and int(paper_year.get(paper_reference_id,9999))<=cut_year:
             cit_relation = '{},{}'.format(paper_id,paper_reference_id)
             cit_relation.append(cit_relation)
 
