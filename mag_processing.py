@@ -49,7 +49,7 @@ def read_paper_ids(pathObj):
         if progress%10000000==0:
             logging.info('read paper ids of {}, progress {} ...'.format(field,progress))
 
-        paper_ids.append(paper_id)
+        paper_ids.append(paper_id[0])
 
     logging.info('Filed {} has {} papers.'.format(field,len(paper_ids)))
 
@@ -101,15 +101,15 @@ def red_ref_relations(pathObj,cut_year):
 
         progress+=1
 
-        if progress&1000000==0:
+        if progress&100000000==0:
             logging.info('progress {:}, {} ref realtions saved.'.format(progress,total_num))
 
         if paper_year.get(paper_id,9999)<=cut_year and paper_year.get(paper_reference_id,9999)<=cut_year:
             cit_relation = '{},{}'.format(paper_id,paper_reference_id)
             cit_relation.append(cit_relation)
 
-            ## 每10万条存储一次
-            if len(cit_relations)%1000000==0:
+            ## 每100万条存储一次
+            if len(cit_relations)%10000000==0:
                 ref_relation_file.write('\n'.join(cit_relations)+'\n')
                 total_num+=len(cit_relations)
                 cit_relations = []
