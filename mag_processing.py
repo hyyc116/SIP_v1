@@ -107,7 +107,7 @@ def red_ref_relations(pathObj,cut_year):
 
         if int(paper_year.get(paper_id,9999))<=cut_year and int(paper_year.get(paper_reference_id,9999))<=cut_year:
             cit_relation = '{},{}'.format(paper_id,paper_reference_id)
-            cit_relation.append(cit_relation)
+            cit_relations.append(cit_relation)
 
             ## 每100万条存储一次
             if len(cit_relations)%10000000==0:
