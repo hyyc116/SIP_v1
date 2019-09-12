@@ -229,6 +229,8 @@ def plot_paper_year_dis(year_dis,outfig):
 
     plt.yscale('log')
 
+    plt.title('Number of computer science papers over years')
+
 
     plt.tight_layout()
 
