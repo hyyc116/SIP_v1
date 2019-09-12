@@ -249,15 +249,15 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    # read_paper_ids(pathObj)
+    read_paper_ids(pathObj)
 
      ## 画出数量随时间变化曲线
     plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
     
-    # red_ref_relations(pathObj,2016)
+    red_ref_relations(pathObj,2016)
 
-    # plot_citation_distribution(pathObj)
+    plot_citation_distribution(pathObj)
 
-    # read_paper_authors(pathObj)
+    read_paper_authors(pathObj)
    
 
