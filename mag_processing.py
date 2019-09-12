@@ -38,7 +38,7 @@ def read_paper_ids(pathObj):
 
     query_op = dbop()
 
-    sql = "select paper_id from mag_core.paper_fields_of_study, mag_core.fields_of_study,mag_core.paper_languages where mag_core.paper_fields_of_study.field_of_study_id = mag_core.fields_of_study.field_of_study_id and mag_core.paper_fields_of_study.paper_id = mag_core.paper_languages.paper_id and mag_core.paper_languages.language_code='en' and mag_core.fields_of_study.normalized_name='{:}'".format(field)
+    sql = "select mag_core.paper_fields_of_study.paper_id from mag_core.paper_fields_of_study, mag_core.fields_of_study,mag_core.paper_languages where mag_core.paper_fields_of_study.field_of_study_id = mag_core.fields_of_study.field_of_study_id and mag_core.paper_fields_of_study.paper_id = mag_core.paper_languages.paper_id and mag_core.paper_languages.language_code='en' and mag_core.fields_of_study.normalized_name='{:}'".format(field)
     progress = 0
 
     paper_ids = []
