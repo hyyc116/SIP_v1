@@ -212,15 +212,15 @@ def plot_paper_year_dis(year_dis_path,outfig):
     xs = []
     ys = []
 
-    for x in sorted(year_dis.keys()):
+    for x in sorted(year_dis.keys(),key= x:int(x)):
 
-        if x<1970:
+        if int(x)<1970:
             continue
 
-        if x>2016:
+        if int(x)>2016:
             continue
 
-        xs.append(x)
+        xs.append(int(x))
         ys.append(year_dis[x])
 
     plt.figure(figsize=(4,3))
