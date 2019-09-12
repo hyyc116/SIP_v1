@@ -212,7 +212,7 @@ def plot_paper_year_dis(year_dis_path,outfig):
     xs = []
     ys = []
 
-    for x in sorted(year_dis.keys(),key= x:int(x)):
+    for x in sorted(year_dis.keys(),key= lambda x:int(x)):
 
         if int(x)<1970:
             continue
