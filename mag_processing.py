@@ -80,8 +80,8 @@ def read_paper_ids(pathObj):
     open(pathObj._field_paper_year_path,'w').write(json.dumps(paper_year))
     logging.info('Data saved to data/mag_{}_paper_year.json'.format(pathObj._field_paper_year_path))
 
-    ## 画出数量随时间变化曲线
-    plot_paper_year_dis(year_dis,pathObj._field_paper_num_dis_over_time_fig)
+    open(pathObj._field_paper_num_dis_path,'w').write(json.dumps(year_dis))
+   
 
 
 ## 读取引用关系，所有引用关系必须在上述id的范围内,并且控制时间在2016年之前
@@ -244,11 +244,15 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    # read_paper_ids(pathObj)
-    red_ref_relations(pathObj,2016)
+    read_paper_ids(pathObj)
 
-    plot_citation_distribution(pathObj)
+     ## 画出数量随时间变化曲线
+    plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
+    
+    # red_ref_relations(pathObj,2016)
 
-    read_paper_authors(pathObj)
+    # plot_citation_distribution(pathObj)
+
+    # read_paper_authors(pathObj)
    
 
