@@ -291,10 +291,10 @@ if __name__ == '__main__':
 
     # red_ref_relations(pathObj,2016)
 
-    plot_citation_distribution(pathObj)
+    # plot_citation_distribution(pathObj)
 
-    # read_paper_authors(pathObj)
+    read_paper_authors(pathObj)
 
-    logging.info(done)
+    logging.info('done')
 
 
