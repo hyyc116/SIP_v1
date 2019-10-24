@@ -284,7 +284,7 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    read_paper_ids(pathObj)
+    # read_paper_ids(pathObj)
 
      ## 画出数量随时间变化曲线
     # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
