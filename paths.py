@@ -23,6 +23,9 @@ class PATH:
         ##文章，作者，机构关系地址
         self._paper_author_aff_path = 'data/paper_author_aff_{}.txt'.format(self._field_tag)
 
+        ### 过滤掉引用长度小于5 以及 引用次数小于5的论文之后的论文分布
+        self._reserved_papers_path = 'data/reserved_papers_{}.txt'.format(self._field_tag)
+
 
         ''' ============== 图片列表 =========='''
         ### 随时间的文章数量变化曲线
@@ -30,6 +33,11 @@ class PATH:
 
         ### 2016年前论文引用次数分布
         self._field_citation_dis_fig = 'fig/citation_dis_{}.png'.format(self._field_tag)
+
+
+
+
+
 
 
 
@@ -44,6 +52,6 @@ class PATH:
     @property
     def paper_year(self):
         return json.loads(open(self._field_paper_year_path).read())
-    
+
 
 

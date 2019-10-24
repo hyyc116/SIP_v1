@@ -81,7 +81,7 @@ def read_paper_ids(pathObj):
     logging.info('Data saved to data/mag_{}_paper_year.json'.format(pathObj._field_paper_year_path))
 
     open(pathObj._field_paper_num_dis_path,'w').write(json.dumps(year_dis))
-   
+
 
 
 ## 读取引用关系，所有引用关系必须在上述id的范围内,并且控制时间在2016年之前
@@ -130,8 +130,12 @@ def red_ref_relations(pathObj,cut_year):
 
 def plot_citation_distribution(pathObj):
 
+    paper_year = json.loads(open(pathObj._field_paper_year_path).read())
+
     pid_citnum = defaultdict(int)
     pids = []
+
+    pid_intervals = defaultdict(list)
     for line in open(pathObj._paper_ref_relation_path):
 
         line = line.strip()
@@ -139,6 +143,13 @@ def plot_citation_distribution(pathObj):
         citing_pid,cited_pid = line.split(',')
 
         pid_citnum[cited_pid]+=1
+
+        citing_year = int(paper_year[citing_pid])
+        cied_year = int(paper_year[cited_pid])
+
+        interval = citing_year-cited_year
+
+        pid_intervals[cited_pid].append(interval)
 
         pids.append(citing_pid)
         pids.append(cited_pid)
@@ -173,6 +184,25 @@ def plot_citation_distribution(pathObj):
 
     logging.info('citation distribution saved to {}'.format(pathObj._field_citation_dis_fig))
 
+    ## get id of papers not filter out
+    reserved_pids = []
+    for pid in pid_intervals.keys():
+
+        max_interval = np.max(pid_intervals[pid])
+
+        num = pid_citnum[pid]
+
+        if max_interval<5 or num<5:
+            continue
+
+        reserved_pids.append(pid)
+
+    logging.info('{} papers reserved.'.format(len(reserved_pids)))
+
+    open(pathObj._reserved_papers_path,'w').write('\n'.join(reserved_pids))
+
+    logging.info('reserved papers saved to {}.'.format(pathObj._reserved_papers_path))
+
 
 ## 获得文章的作者信息
 def read_paper_authors(pathObj):
@@ -183,18 +213,23 @@ def read_paper_authors(pathObj):
     paper_authors = defaultdict(list)
 
     query_op = dbop()
-    
+
     lines = ['paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year']
     sql = 'select paper_id,mag_core.authors.author_id,mag_core.authors.normalized_name,mag_core.affiliations.affiliation_id,mag_core.affiliations.normalized_name,author_sequence_number from mag_core.paper_author_affiliations,mag_core.authors,mag_core.affiliations where mag_core.paper_author_affiliations.author_id=mag_core.authors.author_id and mag_core.paper_author_affiliations.affiliation_id=mag_core.affiliations.affiliation_id'
     for paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number in query_op.query_database(sql):
 
         progress+=1
         if progress%10000000==0:
-            print('read author id {} ...'.format(progress))
+            logging.info('read author id {} ...'.format(progress))
 
         pub_year = int(paper_year.get(paper_id,9999))
-        if pub_year > 2016 or pub_year < 1970:
+        # if pub_year > 2016 or pub_year < 1970:
+        #     continue
+
+        ## 在这里需要的是对该作者在该领域的所有论文信息,需要保留作者1970年发表论文的记录，用于记录作者的career的长度
+        if pub_year>2016:
             continue
+
 
         line = '{},{},{},{},{},{},{}'.format(paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,pub_year)
 
@@ -253,11 +288,13 @@ if __name__ == '__main__':
 
      ## 画出数量随时间变化曲线
     plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
-    
+
     red_ref_relations(pathObj,2016)
 
     plot_citation_distribution(pathObj)
 
     read_paper_authors(pathObj)
-   
+
+    logging.info(done)
+
 
