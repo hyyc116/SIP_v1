@@ -145,7 +145,7 @@ def plot_citation_distribution(pathObj):
         pid_citnum[cited_pid]+=1
 
         citing_year = int(paper_year[citing_pid])
-        cied_year = int(paper_year[cited_pid])
+        cited_year = int(paper_year[cited_pid])
 
         interval = citing_year-cited_year
 
