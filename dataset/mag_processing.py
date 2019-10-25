@@ -396,7 +396,11 @@ def hindex_of_au_ins(pathObj):
             for pid in pids:
 
                 ## 对于每一篇论文，获得该论文该年被引用的总次数
-                cits.append(pid_year_totalcit[pid][year])
+                try:
+                    cits.append(pid_year_totalcit[pid][year])
+                except:
+                    logging.info("{}".format(json.dumps(pid_year_totalcit[pid])))
+                    return
 
             ## 计算该作者当年的h-index
             hix = Hindex(cits)
