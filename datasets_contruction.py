@@ -10,7 +10,7 @@ from paths import PATH
 
 
 ### 每一个数据集的文章ID至少比2016年早m+n年发表
-def construct_datasets(pathObj.mn_list):
+def construct_datasets(pathObj,mn_list):
 
     logging.info('Loading data ...')
     reserved_pids = [line.strip() for line in open(pathObj._reserved_papers_path)]
