@@ -30,6 +30,23 @@ class PATH:
         self._reserved_papers_path = 'data/reserved_papers_{}.txt'.format(self._field_tag)
 
 
+        ### 论文每年的引用次数
+        self._paper_year_citations_path = 'data/paper_year_citation_{}.txt'.format(self._field_tag)
+
+        ### 作者h-index随着时间的变化
+        self._author_year_hix_path = 'data/author_year_hix_{}.json'.format(self._field_tag)
+        ### 作者研究开始的年份
+        self._author_start_time_path = 'data/_author_start_time_{}.json'.format(self._field_tag)
+
+        ## 机构的impact factor随着时间的变化
+        self._ins_year_if_path = 'data/ins_year_if_{}.json'.format(self._field_tag)
+
+        ##  venue的IF随时间的变化
+        self._venue_year_if_path = 'data/venue_year_if_{}.json'.format(self._field_tag)
+
+
+
+
         ''' ============== 图片列表 =========='''
         ### 随时间的文章数量变化曲线
         self._field_paper_num_dis_over_time_fig = 'fig/paper_num_dis_over_time_{}.png'.format(self._field_tag)

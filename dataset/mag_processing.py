@@ -310,6 +310,17 @@ def plot_paper_year_dis(year_dis_path,outfig):
     logging.info('{} papers,Fig saved to {}'.format(np.sum(ys),outfig))
 
 
+def Hindex(indexList):
+    indexSet = sorted(list(set(indexList)), reverse = True)
+    for index in indexSet:
+        #clist为大于等于指定引用次数index的文章列表
+        clist = [i for i in indexList if i >=index ]
+        #由于引用次数index逆序排列，当index<=文章数量len(clist)时，得到H指数
+        if index <=len(clist):
+            break
+    return index
+
+
 ## 根据论文-作者,论文-机构，论文-期刊 关系生成每一位作者、机构、venue的h-index，impact factor，作者的career的长度
 def hindex_of_au_ins(pathObj):
 
@@ -323,9 +334,19 @@ def hindex_of_au_ins(pathObj):
 
         pid_citnum[cited_pid][int(paper_year[citing_pid])]+=1
 
+    open(pathObj._paper_year_citations_path,'w').write(json.dumps(pid_citnum))
+    logging.info('paper yearly citation number saved.')
+
+    pid_year_totalcit = defaultdict(dict)
+
+    for pid in pid_year_citnum.keys():
+        total = 0 
+        for year in sorted(pid_year_citnum.keys()):
+            total+=pid_year_citnum[pid][year]
+            pid_year_totalcit[pid][year] = total
+
     author_year_paper = defaultdict(lambda:defaultdict(list))
     ins_year_paper = defaultdict(lambda:defaultdict(list))
-    venue_year_paper = defaultdict(lambda:defaultdict(list))
 
     ## 论文与作者关系
     for line in open(pathObj._paper_author_aff_path):
@@ -334,10 +355,146 @@ def hindex_of_au_ins(pathObj):
         if paper_id =='pid':
             continue
 
+        if author_id!='':
+            author_year_paper[author_id][int(year)].append(paper_id)
 
+        if aff_id!='':
+            ins_year_paper[aff_id][int(year)].append(paper_id)
 
-        pass
+    author_starty = {}
+    ## 作者的h-index 以及 career的长度进行计算
+    author_year_hix = defaultdict(dict)
+    for author_id in author_year_paper.keys():
 
+        year_papers = author_year_paper[author_id]
+
+        years = sorted(year_papers.keys())
+
+        ## 作者第一篇论文的发表时间
+        author_starty[author_id] = np.min(years)
+
+        for year in years:
+
+            ## 对所有作者1970年开始计算h-index
+
+            if year<1970:
+                continue
+
+            pids= year_papers[year]
+
+            cits = []
+            for pid in pids:
+
+                ## 对于每一篇论文，获得该论文该年被引用的总次数
+                cits.append(pid_year_totalcit[pid][year])
+
+            ## 计算该作者当年的h-index
+            hix = Hindex(cits)
+            author_year_hix[author_id][year] = hix
+
+    open(pathObj._author_start_time_path,'w').write(json.dumps(author_starty))
+    logging.info('author start year saved.')
+
+    open(pathObj._author_year_hix_path,'w').write(json.dumps(author_year_hix))
+    logging.info('author yearly h-index saved.')
+
+    ## ins的hindex
+    ins_year_if = defaultdict(dict)
+    for ins_id in ins_year_paper.keys():
+
+        year_papers = ins_year_paper[ins_id]
+        years = sorted([y for y in year_papers.keys() if y>=1970])
+
+        year_cits = []
+        for year in years:
+            pids= year_papers[year]
+
+            cits = []
+            for pid in pids:
+
+                ## 对于每一篇论文，获得该论文该年被引用的总次数
+                cits.append(pid_year_citnum[pid][year])
+
+            year_cits.append(cits)
+
+        for i,year in enuerate(years):
+            cits = []
+            if i-1>=0:
+                cits.extend(year_cits[i-1])
+
+            if i-2>=0:
+                cits.extend(year_cits[i-2])
+
+            if len(cits)==0:
+
+                ins_year_if[ins_id][year] = 0
+            else:
+
+                ins_year_if[ins_id][year] = np.mean(cits)
+
+    open(pathObj._ins_year_if_path,'w').write(json.dumps(ins_year_if))
+    logging.info('institutes yearly if saved.')
+
+    venue_year_paper = defaultdict(lambda:defaultdict(list))
+    count = 0 
+    for line in open(pathObj._paper_venue_path):
+
+        paper_id,journal_id,conf_series_id,conf_inst_id = line.strip().split(',')
+
+        year = int(paper_year[paper_id])
+        venue_id=None
+        if journal_id!='':
+            venue_id = 'J_'+journal_id
+        if conf_series_id!='':
+            venue_id = 'C_'+conf_series_id
+        
+        if conf_inst_id!='':
+            venue_id = 'I_'+conf_inst_id
+
+        if venue_id is None:
+            count+=1
+            continue
+
+        venue_year_paper[venue_id][year].append(paper_id)
+
+    logging.info('{} papers do not have venue info.'.format(count))
+
+    ## ins的hindex
+    venue_year_if = defaultdict(dict)
+    for venue_id in venue_year_paper.keys():
+
+        year_papers = venue_year_paper[venue_id]
+        years = sorted([y for y in year_papers.keys() if y>=1970])
+
+        year_cits = []
+        for year in years:
+            pids= year_papers[year]
+
+            cits = []
+            for pid in pids:
+
+                ## 对于每一篇论文，获得该论文该年被引用的总次数
+                cits.append(pid_year_citnum[pid][year])
+
+            year_cits.append(cits)
+
+        for i,year in enuerate(years):
+            cits = []
+            if i-1>=0:
+                cits.extend(year_cits[i-1])
+
+            if i-2>=0:
+                cits.extend(year_cits[i-2])
+
+            if len(cits)==0:
+
+                venue_year_if[ins_id][year] = 0
+            else:
+
+                venue_year_if[ins_id][year] = np.mean(cits)
+
+    open(pathObj._venue_year_if_path,'w').write(json.dumps(venue_year_if))
+    logging.info('venue yearly if saved.')
               
 
 
@@ -349,7 +506,7 @@ if __name__ == '__main__':
 
     # read_paper_ids(pathObj)
 
-    read_paper_venue(pathObj)
+    # read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
     # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
@@ -359,6 +516,8 @@ if __name__ == '__main__':
     # plot_citation_distribution(pathObj)
 
     # read_paper_authors(pathObj)
+
+    hindex_of_au_ins(pathObj)
 
     logging.info('done')
 
