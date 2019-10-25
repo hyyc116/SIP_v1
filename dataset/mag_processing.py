@@ -102,7 +102,7 @@ def read_paper_venue(pathObj):
         if progress%10000000==0:
             logging.info('progress {} ...'.format(progress))
 
-        lines.append('{},{},{}'.format(paper_id,journal_id,conference_series_id,conference_instance_id))
+        lines.append('{},{},{},{}'.format(paper_id,journal_id,conference_series_id,conference_instance_id))
 
         if len(lines)%100000==0:
             f.write('\n'.join(lines)+'\n')
@@ -330,6 +330,11 @@ def hindex_of_au_ins(pathObj):
     ## 论文与作者关系
     for line in open(pathObj._paper_author_aff_path):
         paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
+
+        if paper_id =='pid':
+            continue
+
+
 
         pass
 
