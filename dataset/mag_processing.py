@@ -341,8 +341,16 @@ def hindex_of_au_ins(pathObj):
 
     for pid in pid_year_citnum.keys():
         total = 0
-        for year in sorted(pid_year_citnum[pid].keys()):
-            total+=pid_year_citnum[pid][year]
+        year_citnum = pid_year_citnum[pid]
+
+        years = sorted(year_citnum.keys())
+        cits = []
+        for year in range(years[0],2017):
+            cits.append(year_citnum.get(year,0))
+
+        total = 0
+        for i,year in enumerate(range(years[0],2017)):
+            total+=cits[i]
             pid_year_totalcit[pid][year] = total
 
     author_year_paper = defaultdict(lambda:defaultdict(list))
