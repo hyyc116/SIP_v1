@@ -102,6 +102,9 @@ def read_paper_venue(pathObj):
         if progress%10000000==0:
             logging.info('progress {} ...'.format(progress))
 
+        if paper_year.get(paper_id,None) is None:
+            continue
+
         lines.append('{},{},{},{}'.format(paper_id,journal_id,conference_series_id,conference_instance_id))
 
         if len(lines)%100000==0:
@@ -519,7 +522,7 @@ if __name__ == '__main__':
 
     # read_paper_ids(pathObj)
 
-    # read_paper_venue(pathObj)
+    read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
     # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
