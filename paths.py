@@ -36,6 +36,8 @@ class PATH:
 
 
 
+    def dataset_id_path(self,m,n):
+        return 'data/sip_m{}_n{}_ids_{}.txt'.format(m,n,self._field_tag)
 
 
 
