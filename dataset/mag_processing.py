@@ -427,7 +427,7 @@ def hindex_of_au_ins(pathObj):
 
             year_cits.append(cits)
 
-        for i,year in enuerate(years):
+        for i,year in enumerate(years):
             cits = []
             if i-1>=0:
                 cits.extend(year_cits[i-1])
@@ -491,7 +491,7 @@ def hindex_of_au_ins(pathObj):
 
             year_cits.append(cits)
 
-        for i,year in enuerate(years):
+        for i,year in enumerate(years):
             cits = []
             if i-1>=0:
                 cits.extend(year_cits[i-1])
