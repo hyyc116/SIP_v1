@@ -216,9 +216,9 @@ def read_paper_authors(pathObj):
 
     query_op = dbop()
 
-    lines = ['paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year']
-    sql = 'select paper_id,mag_core.authors.author_id,mag_core.authors.normalized_name,mag_core.affiliations.affiliation_id,mag_core.affiliations.normalized_name,author_sequence_number from mag_core.paper_author_affiliations,mag_core.authors,mag_core.affiliations where mag_core.paper_author_affiliations.author_id=mag_core.authors.author_id and mag_core.paper_author_affiliations.affiliation_id=mag_core.affiliations.affiliation_id'
-    for paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number in query_op.query_database(sql):
+    lines = ['paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conf_id,year']
+    sql = 'select paper_id,mag_core.authors.author_id,mag_core.authors.normalized_name,mag_core.affiliations.affiliation_id,mag_core.affiliations.normalized_name,author_sequence_number,journal_id,conference_series_id from mag_core.paper_author_affiliations,mag_core.authors,mag_core.affiliations where mag_core.paper_author_affiliations.author_id=mag_core.authors.author_id and mag_core.paper_author_affiliations.affiliation_id=mag_core.affiliations.affiliation_id'
+    for paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conference_series_id in query_op.query_database(sql):
 
         progress+=1
         if progress%10000000==0:
@@ -233,7 +233,7 @@ def read_paper_authors(pathObj):
             continue
 
 
-        line = '{},{},{},{},{},{},{}'.format(paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,pub_year)
+        line = '{},{},{},{},{},{},{},{},{}'.format(paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conference_series_id,pub_year)
 
         lines.append(line)
 
@@ -278,6 +278,32 @@ def plot_paper_year_dis(year_dis_path,outfig):
 
     logging.info('{} papers,Fig saved to {}'.format(np.sum(ys),outfig))
 
+
+
+## 根据论文-作者,论文-机构，论文-期刊 关系生成每一位作者、机构、venue的h-index，impact factor，作者的career的长度
+def hindex_of_au_ins(pathObj):
+
+    paper_year = json.loads(open(pathObj._field_paper_year_path).read())
+
+    ## 加载论文随着时间的引用次数
+    pid_year_citnum = defaultdict(lambda: defaultdict(int)) 
+    for line in open(pathObj._paper_ref_relation_path):
+        line = line.strip()
+        citing_pid,cited_pid = line.split(',')
+
+        pid_citnum[cited_pid][int(paper_year[citing_pid])]+=1
+
+    author_year_paper = defaultdict(lambda:defaultdict(list))
+    ins_year_paper = defaultdict(lambda:defaultdict(list))
+    venue_year_paper = defaultdict(lambda:defaultdict(list))
+
+    ## 论文与作者关系
+    for line in open(pathObj._paper_author_aff_path):
+        paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
+
+        pid_
+
+              
 
 
 if __name__ == '__main__':
