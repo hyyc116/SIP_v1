@@ -337,7 +337,7 @@ def hindex_of_au_ins(pathObj):
     open(pathObj._paper_year_citations_path,'w').write(json.dumps(pid_year_citnum))
     logging.info('paper yearly citation number saved.')
 
-    pid_year_totalcit = defaultdict(dict)
+    pid_year_totalcit = defaultdict(lambda:defaultdict(int))
 
     for pid in pid_year_citnum.keys():
         total = 0
@@ -395,12 +395,8 @@ def hindex_of_au_ins(pathObj):
             cits = []
             for pid in pids:
 
-                ## 对于每一篇论文，获得该论文该年被引用的总次数
-                try:
-                    cits.append(pid_year_totalcit[pid][year])
-                except:
-                    logging.info("{}".format(json.dumps(pid_year_totalcit[pid])))
-                    return
+                ## 对于每一篇论文，获得该论文该年被引用的总次数,如果篇论文没有被引用 返回0
+                cits.append(pid_year_totalcit[pid][year])
 
             ## 计算该作者当年的h-index
             hix = Hindex(cits)
