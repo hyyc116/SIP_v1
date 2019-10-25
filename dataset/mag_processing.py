@@ -341,7 +341,7 @@ def hindex_of_au_ins(pathObj):
 
     for pid in pid_year_citnum.keys():
         total = 0
-        for year in sorted(pid_year_citnum.keys()):
+        for year in sorted(pid_year_citnum[pid].keys()):
             total+=pid_year_citnum[pid][year]
             pid_year_totalcit[pid][year] = total
 
