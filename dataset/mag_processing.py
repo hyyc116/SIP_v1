@@ -4,8 +4,6 @@
 
 MAG的数据包括作者名消歧，本程序从所有的数据里面抽取某一个领域的论文数据，创建训练数据。
 
-
-
 SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog'
 AND schemaname != 'information_schema';
 
@@ -84,6 +82,39 @@ def read_paper_ids(pathObj):
 
     open(pathObj._field_paper_num_dis_path,'w').write(json.dumps(year_dis))
 
+
+## 读取选取的文章的venue id
+def read_paper_venue(pathObj):
+
+    paper_year = json.loads(open(pathObj._field_paper_year_path).read())
+    logging.info('paper year dict loaded ..')
+    progress = 0
+
+    f = open(pathObj._paper_venue_path,'w')
+
+    query_op = dbop()
+    sql = 'select paper_id,journal_id,conference_series_id,conference_instance_id from mag_core.papers'
+    lines = ['pid,journal_id,conference_series_id,conference_instance_id']
+    for paper_id,journal_id,conference_series_id,conference_instance_id in query_op.query_database(sql):
+
+        progress+=1
+
+        if progress%10000000==0:
+            logging.info('progress {} ...'.format(progress))
+
+        lines.append('{},{},{}'.format(paper_id,journal_id,conference_series_id,conference_instance_id))
+
+        if len(lines)%100000==0:
+            f.write('\n'.join(lines)+'\n')
+
+            lines = []
+
+    if len(lines)!=0:
+        f.write('\n'.join(lines)+'\n')
+
+    f.close()
+
+    logging.info('paper venue saved to {}.'.format(pathObj._paper_venue_path))
 
 
 ## 读取引用关系，所有引用关系必须在上述id的范围内,并且控制时间在2016年之前
@@ -216,9 +247,9 @@ def read_paper_authors(pathObj):
 
     query_op = dbop()
 
-    lines = ['paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conf_id,year']
-    sql = 'select paper_id,mag_core.authors.author_id,mag_core.authors.normalized_name,mag_core.affiliations.affiliation_id,mag_core.affiliations.normalized_name,author_sequence_number,journal_id,conference_series_id from mag_core.paper_author_affiliations,mag_core.authors,mag_core.affiliations where mag_core.paper_author_affiliations.author_id=mag_core.authors.author_id and mag_core.paper_author_affiliations.affiliation_id=mag_core.affiliations.affiliation_id'
-    for paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conference_series_id in query_op.query_database(sql):
+    lines = ['paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year']
+    sql = 'select paper_id,mag_core.authors.author_id,mag_core.authors.normalized_name,mag_core.affiliations.affiliation_id,mag_core.affiliations.normalized_name,author_sequence_number from mag_core.paper_author_affiliations,mag_core.authors,mag_core.affiliations where mag_core.paper_author_affiliations.author_id=mag_core.authors.author_id and mag_core.paper_author_affiliations.affiliation_id=mag_core.affiliations.affiliation_id'
+    for paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number in query_op.query_database(sql):
 
         progress+=1
         if progress%10000000==0:
@@ -233,7 +264,7 @@ def read_paper_authors(pathObj):
             continue
 
 
-        line = '{},{},{},{},{},{},{},{},{}'.format(paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conference_series_id,pub_year)
+        line = '{},{},{},{},{},{},{}'.format(paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,pub_year)
 
         lines.append(line)
 
@@ -279,6 +310,9 @@ def plot_paper_year_dis(year_dis_path,outfig):
     logging.info('{} papers,Fig saved to {}'.format(np.sum(ys),outfig))
 
 
+def read_paper_
+
+
 
 ## 根据论文-作者,论文-机构，论文-期刊 关系生成每一位作者、机构、venue的h-index，impact factor，作者的career的长度
 def hindex_of_au_ins(pathObj):
@@ -299,11 +333,9 @@ def hindex_of_au_ins(pathObj):
 
     ## 论文与作者关系
     for line in open(pathObj._paper_author_aff_path):
-        paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conference_series_id,year = line.strip().split(',')
+        paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
 
         pass
-
-        
 
               
 
@@ -316,6 +348,8 @@ if __name__ == '__main__':
 
     # read_paper_ids(pathObj)
 
+    read_paper_venue()
+
      ## 画出数量随时间变化曲线
     # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
 
@@ -323,7 +357,7 @@ if __name__ == '__main__':
 
     # plot_citation_distribution(pathObj)
 
-    read_paper_authors(pathObj)
+    # read_paper_authors(pathObj)
 
     logging.info('done')
 

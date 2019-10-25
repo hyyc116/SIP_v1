@@ -23,6 +23,9 @@ class PATH:
         ##文章，作者，机构关系地址
         self._paper_author_aff_path = 'data/paper_author_aff_{}.txt'.format(self._field_tag)
 
+        ## 文章与venue的对应关系
+        self._paper_venue_path = 'data/paper_venue_{}.csv'.format(self._field_tag)
+
         ### 过滤掉引用长度小于5 以及 引用次数小于5的论文之后的论文分布
         self._reserved_papers_path = 'data/reserved_papers_{}.txt'.format(self._field_tag)
 
