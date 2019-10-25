@@ -352,7 +352,7 @@ def hindex_of_au_ins(pathObj):
     for line in open(pathObj._paper_author_aff_path):
         paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
 
-        if paper_id =='pid':
+        if paper_id =='paper_id':
             continue
 
         if author_id!='':
@@ -442,6 +442,9 @@ def hindex_of_au_ins(pathObj):
     for line in open(pathObj._paper_venue_path):
 
         paper_id,journal_id,conf_series_id,conf_inst_id = line.strip().split(',')
+
+        if paper_id=='paper_id':
+            continue
 
         year = int(paper_year[paper_id])
         venue_id=None
