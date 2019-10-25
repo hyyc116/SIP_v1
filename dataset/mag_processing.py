@@ -299,9 +299,11 @@ def hindex_of_au_ins(pathObj):
 
     ## 论文与作者关系
     for line in open(pathObj._paper_author_aff_path):
-        paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
+        paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,journal_id,conference_series_id,year = line.strip().split(',')
 
-        pid_
+        pass
+
+        
 
               
 
