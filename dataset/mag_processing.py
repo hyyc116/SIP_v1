@@ -29,6 +29,8 @@ AND schemaname != 'information_schema';
  mag_core   | fields_of_study_children             |
 
 '''
+import sys
+sys.path.extend(['..','.'])
 from basic_config import *
 from paths import PATH
 ## 读出计算机领域的所有论文ID

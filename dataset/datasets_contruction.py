@@ -1,4 +1,6 @@
 #coding:utf-8
+import sys
+sys.path.extend(['..','.'])
 from basic_config import *
 from paths import PATH
 
