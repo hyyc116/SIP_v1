@@ -310,10 +310,6 @@ def plot_paper_year_dis(year_dis_path,outfig):
     logging.info('{} papers,Fig saved to {}'.format(np.sum(ys),outfig))
 
 
-def read_paper_
-
-
-
 ## 根据论文-作者,论文-机构，论文-期刊 关系生成每一位作者、机构、venue的h-index，impact factor，作者的career的长度
 def hindex_of_au_ins(pathObj):
 
