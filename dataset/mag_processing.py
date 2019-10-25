@@ -451,7 +451,7 @@ def hindex_of_au_ins(pathObj):
 
         paper_id,journal_id,conf_series_id,conf_inst_id = line.strip().split(',')
 
-        if paper_id=='paper_id':
+        if paper_id=='pid':
             continue
 
         year = int(paper_year[paper_id])
