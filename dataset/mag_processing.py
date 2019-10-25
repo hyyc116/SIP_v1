@@ -332,9 +332,9 @@ def hindex_of_au_ins(pathObj):
         line = line.strip()
         citing_pid,cited_pid = line.split(',')
 
-        pid_citnum[cited_pid][int(paper_year[citing_pid])]+=1
+        pid_year_citnum[cited_pid][int(paper_year[citing_pid])]+=1
 
-    open(pathObj._paper_year_citations_path,'w').write(json.dumps(pid_citnum))
+    open(pathObj._paper_year_citations_path,'w').write(json.dumps(pid_year_citnum))
     logging.info('paper yearly citation number saved.')
 
     pid_year_totalcit = defaultdict(dict)
