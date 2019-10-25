@@ -327,7 +327,7 @@ def hindex_of_au_ins(pathObj):
     paper_year = json.loads(open(pathObj._field_paper_year_path).read())
 
     ## 加载论文随着时间的引用次数
-    pid_year_citnum = defaultdict(lambda: defaultdict(int)) 
+    pid_year_citnum = defaultdict(lambda: defaultdict(int))
     for line in open(pathObj._paper_ref_relation_path):
         line = line.strip()
         citing_pid,cited_pid = line.split(',')
@@ -340,7 +340,7 @@ def hindex_of_au_ins(pathObj):
     pid_year_totalcit = defaultdict(dict)
 
     for pid in pid_year_citnum.keys():
-        total = 0 
+        total = 0
         for year in sorted(pid_year_citnum.keys()):
             total+=pid_year_citnum[pid][year]
             pid_year_totalcit[pid][year] = total
@@ -360,6 +360,8 @@ def hindex_of_au_ins(pathObj):
 
         if aff_id!='':
             ins_year_paper[aff_id][int(year)].append(paper_id)
+
+    logging.info('Stat author hindex ...')
 
     author_starty = {}
     ## 作者的h-index 以及 career的长度进行计算
@@ -436,7 +438,7 @@ def hindex_of_au_ins(pathObj):
     logging.info('institutes yearly if saved.')
 
     venue_year_paper = defaultdict(lambda:defaultdict(list))
-    count = 0 
+    count = 0
     for line in open(pathObj._paper_venue_path):
 
         paper_id,journal_id,conf_series_id,conf_inst_id = line.strip().split(',')
@@ -447,7 +449,7 @@ def hindex_of_au_ins(pathObj):
             venue_id = 'J_'+journal_id
         if conf_series_id!='':
             venue_id = 'C_'+conf_series_id
-        
+
         if conf_inst_id!='':
             venue_id = 'I_'+conf_inst_id
 
@@ -495,7 +497,7 @@ def hindex_of_au_ins(pathObj):
 
     open(pathObj._venue_year_if_path,'w').write(json.dumps(venue_year_if))
     logging.info('venue yearly if saved.')
-              
+
 
 
 if __name__ == '__main__':
