@@ -29,6 +29,9 @@ class PATH:
         ### 过滤掉引用长度小于5 以及 引用次数小于5的论文之后的论文分布
         self._reserved_papers_path = 'data/reserved_papers_{}.txt'.format(self._field_tag)
 
+        ## 论文对应的venue id
+        self._paper_venueid_path = 'data/paper_vid_{}.json'.format(self._field_tag)
+
 
         ### 论文每年的引用次数
         self._paper_year_citations_path = 'data/paper_year_citation_{}.txt'.format(self._field_tag)

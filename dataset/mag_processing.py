@@ -386,6 +386,8 @@ def hindex_of_au_ins(pathObj):
         ## 作者第一篇论文的发表时间
         author_starty[author_id] = np.min(years)
 
+        pids = []
+
         for year in years:
 
             ## 对所有作者1970年开始计算h-index
@@ -393,7 +395,8 @@ def hindex_of_au_ins(pathObj):
             if year<1970:
                 continue
 
-            pids= year_papers[year]
+            ## h-index是所有论文的总被引次数进行计算的
+            pids.extend(year_papers[year])
 
             cits = []
             for pid in pids:
@@ -411,45 +414,45 @@ def hindex_of_au_ins(pathObj):
     open(pathObj._author_year_hix_path,'w').write(json.dumps(author_year_hix))
     logging.info('author yearly h-index saved.')
 
-    ## ins的hindex
+    ## impact facotr是当前对前两年发表的期刊的平均引用次数
     ins_year_if = defaultdict(dict)
     for ins_id in ins_year_paper.keys():
 
         year_papers = ins_year_paper[ins_id]
         years = sorted([y for y in year_papers.keys() if y>=1970])
 
-        year_cits = []
         for year in years:
-            pids= year_papers[year]
+            ## 获得前两年发表的论文
+            pids = []
 
+            if year-1>=0:
+                pids.extend(ins_year_paper[ins_id][year-1])
+
+            if year-2>=0:
+                pids.extend(ins_year_paper[ins_id][year-2])
+
+            ## 获得前两年发表的论文在今年的引用次数
             cits = []
             for pid in pids:
-
-                ## 对于每一篇论文，获得该论文该年被引用的总次数
+                ## 对于每一篇论文，获得去年以及前年的被引用词素
                 cits.append(pid_year_citnum[pid][year])
 
-            year_cits.append(cits)
-
-        for i,year in enumerate(years):
-            cits = []
-            if i-1>=0:
-                cits.extend(year_cits[i-1])
-
-            if i-2>=0:
-                cits.extend(year_cits[i-2])
-
             if len(cits)==0:
-
-                ins_year_if[ins_id][year] = 0
+                IF = 0
             else:
+                IF = np.mean(cits)
 
-                ins_year_if[ins_id][year] = np.mean(cits)
+            ins_year_if[ins_id][year] = IF
 
     open(pathObj._ins_year_if_path,'w').write(json.dumps(ins_year_if))
     logging.info('institutes yearly if saved.')
 
     venue_year_paper = defaultdict(lambda:defaultdict(list))
     count = 0
+
+    paper_venue_id = {}
+
+    total = 0
     for line in open(pathObj._paper_venue_path):
 
         paper_id,journal_id,conf_series_id,conf_inst_id = line.strip().split(',')
@@ -471,9 +474,15 @@ def hindex_of_au_ins(pathObj):
             count+=1
             continue
 
+        total+=1
+
+        paper_venue_id[paper_id] = venue_id
+
         venue_year_paper[venue_id][year].append(paper_id)
 
-    logging.info('{} papers do not have venue info.'.format(count))
+    logging.info('{}/{} papers do not have venue info.'.format(count,total))
+
+    open(pathObj._paper_venueid_path,'w').write(json.dumps(paper_venue_id))
 
     ## ins的hindex
     venue_year_if = defaultdict(dict)
@@ -482,32 +491,28 @@ def hindex_of_au_ins(pathObj):
         year_papers = venue_year_paper[venue_id]
         years = sorted([y for y in year_papers.keys() if y>=1970])
 
-        year_cits = []
         for year in years:
+
             pids= year_papers[year]
 
+            if year-1>=0:
+                pids.extend(venue_year_paper[venue_id][year-1])
+
+            if year-2>=0:
+                pids.extend(venue_year_paper[venue_id][year-2])
+
+            ## 获得前两年发表的论文在今年的引用次数
             cits = []
             for pid in pids:
-
-                ## 对于每一篇论文，获得该论文该年被引用的总次数
+                ## 对于每一篇论文，获得去年以及前年的被引用词素
                 cits.append(pid_year_citnum[pid][year])
 
-            year_cits.append(cits)
-
-        for i,year in enumerate(years):
-            cits = []
-            if i-1>=0:
-                cits.extend(year_cits[i-1])
-
-            if i-2>=0:
-                cits.extend(year_cits[i-2])
-
             if len(cits)==0:
-
-                venue_year_if[ins_id][year] = 0
+                IF = 0
             else:
+                IF = np.mean(cits)
 
-                venue_year_if[ins_id][year] = np.mean(cits)
+            venue_year_if[venue_id][year] = np.mean(cits)
 
     open(pathObj._venue_year_if_path,'w').write(json.dumps(venue_year_if))
     logging.info('venue yearly if saved.')
