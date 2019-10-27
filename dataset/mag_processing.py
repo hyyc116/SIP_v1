@@ -503,7 +503,7 @@ def hindex_of_au_ins(pathObj):
 
         for year in range(years[0],2017):
 
-            pids= year_papers[year]
+            pids= []
 
             if year-1>=1970:
                 pids.extend(venue_year_paper[venue_id][year-1])
