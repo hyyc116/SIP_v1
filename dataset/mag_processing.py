@@ -454,6 +454,11 @@ def hindex_of_au_ins(pathObj):
     open(pathObj._ins_year_if_path,'w').write(json.dumps(ins_year_if))
     logging.info('institutes yearly if saved.')
 
+def venue_if(pathObj):
+    paper_year = json.loads(open(pathObj._field_paper_year_path).read())
+
+    pid_year_citnum = json.loads(open(pathObj._paper_year_citations_path).read())
+
     venue_year_paper = defaultdict(lambda:defaultdict(list))
     count = 0
 
@@ -548,7 +553,8 @@ if __name__ == '__main__':
 
     # read_paper_authors(pathObj)
 
-    hindex_of_au_ins(pathObj)
+    # hindex_of_au_ins(pathObj)
+    venue_if(pathObj)
 
     logging.info('done')
 
