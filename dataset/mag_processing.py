@@ -497,8 +497,15 @@ def venue_if(pathObj):
     open(pathObj._paper_venueid_path,'w').write(json.dumps(paper_venue_id))
 
     ## ins的hindex
+    progress=0
+    totalnum = len(venue_year_paper.keys())
     venue_year_if = defaultdict(dict)
     for venue_id in venue_year_paper.keys():
+
+        progress +=1
+        if progress%10000==0:
+            logging.info('progress {}/{} ...'.format(progress,totalnum))
+
 
         year_papers = venue_year_paper[venue_id]
         years = sorted([y for y in year_papers.keys() if y>=1970])
@@ -519,8 +526,15 @@ def venue_if(pathObj):
             ## 获得前两年发表的论文在今年的引用次数
             cits = []
             for pid in pids:
-                ## 对于每一篇论文，获得去年以及前年的被引用词素
-                cits.append(pid_year_citnum[pid][year])
+
+                year_num = pid_year_citnum.get(pid,None)
+
+                if year_num is None:
+                    cits.append(0)
+                else:
+                    num = year_num.get(str(year),0)
+                    ## 对于每一篇论文，获得去年以及前年的被引用词素
+                    cits.append(num)
 
             if len(cits)==0:
                 IF = 0
