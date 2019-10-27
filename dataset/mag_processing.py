@@ -424,15 +424,18 @@ def hindex_of_au_ins(pathObj):
         year_papers = ins_year_paper[ins_id]
         years = sorted([y for y in year_papers.keys() if y>=1970])
 
+        if len(years)==0:
+            continue
+
         ## 时间同样从发表年份到2016年
         for year in range(years[0],2017):
             ## 获得前两年发表的论文
             pids = []
 
-            if year-1>=0:
+            if year-1>=1970:
                 pids.extend(ins_year_paper[ins_id][year-1])
 
-            if year-2>=0:
+            if year-2>=1970:
                 pids.extend(ins_year_paper[ins_id][year-2])
 
             ## 获得前两年发表的论文在今年的引用次数
@@ -495,14 +498,17 @@ def hindex_of_au_ins(pathObj):
         year_papers = venue_year_paper[venue_id]
         years = sorted([y for y in year_papers.keys() if y>=1970])
 
+        if len(years)==0:
+            continue
+
         for year in range(years[0],2017):
 
             pids= year_papers[year]
 
-            if year-1>=0:
+            if year-1>=1970:
                 pids.extend(venue_year_paper[venue_id][year-1])
 
-            if year-2>=0:
+            if year-2>=1970:
                 pids.extend(venue_year_paper[venue_id][year-2])
 
             ## 获得前两年发表的论文在今年的引用次数
