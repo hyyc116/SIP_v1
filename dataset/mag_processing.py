@@ -541,7 +541,7 @@ def venue_if(pathObj):
             else:
                 IF = np.mean(cits)
 
-            venue_year_if[venue_id][year] = np.mean(cits)
+            venue_year_if[venue_id][year] = IF
 
     open(pathObj._venue_year_if_path,'w').write(json.dumps(venue_year_if))
     logging.info('venue yearly if saved.')
