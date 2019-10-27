@@ -22,12 +22,13 @@ def extract_hindex_features(pid,pid_seq_authors,author_year_hindex):
 
             continue
 
+
+
     ## average hindex
     for seq,author in pid_seq_authors[pid]:
 
+        pass
 
-
-    pass
 
 
 

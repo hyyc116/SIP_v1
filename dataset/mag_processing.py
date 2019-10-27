@@ -405,7 +405,10 @@ def hindex_of_au_ins(pathObj):
                 cits.append(pid_year_totalcit[pid][year])
 
             ## 计算该作者当年的h-index
-            hix = Hindex(cits)
+            if len(cits)==0:
+                hix = 0
+            else:
+                hix = Hindex(cits)
             author_year_hix[author_id][year] = hix
 
     open(pathObj._author_start_time_path,'w').write(json.dumps(author_starty))
