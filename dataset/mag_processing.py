@@ -387,15 +387,15 @@ def hindex_of_au_ins(pathObj):
         author_starty[author_id] = np.min(years)
 
         pids = []
-
-        for year in years:
+        ## 这里的年份应该是从第一年到2016年
+        for year in range(years[0],2017):
 
             ## 对所有作者1970年开始计算h-index
 
             if year<1970:
                 continue
 
-            ## h-index是所有论文的总被引次数进行计算的
+            ## 该年及之前发表所有论文
             pids.extend(year_papers[year])
 
             cits = []
@@ -421,7 +421,8 @@ def hindex_of_au_ins(pathObj):
         year_papers = ins_year_paper[ins_id]
         years = sorted([y for y in year_papers.keys() if y>=1970])
 
-        for year in years:
+        ## 时间同样从发表年份到2016年
+        for year in range(years[0],2017):
             ## 获得前两年发表的论文
             pids = []
 
@@ -434,7 +435,7 @@ def hindex_of_au_ins(pathObj):
             ## 获得前两年发表的论文在今年的引用次数
             cits = []
             for pid in pids:
-                ## 对于每一篇论文，获得去年以及前年的被引用词素
+                ## 对于每一篇论文，获得去年以及前年的被引用次数
                 cits.append(pid_year_citnum[pid][year])
 
             if len(cits)==0:
@@ -491,7 +492,7 @@ def hindex_of_au_ins(pathObj):
         year_papers = venue_year_paper[venue_id]
         years = sorted([y for y in year_papers.keys() if y>=1970])
 
-        for year in years:
+        for year in range(years[0],2017):
 
             pids= year_papers[year]
 
