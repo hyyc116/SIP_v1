@@ -76,11 +76,35 @@ def avg_author_career_length(year,seq_authors,author_starty):
 
     return np.mean(delta_years)
 
+def avg_ins_if(history_years,inses,ins_year_if):
 
+    all_ifs = []
+
+    for ins in inses:
+
+        year_if = ins_year_if[ins]
+
+        ifs = []
+        for year in history_years:
+            ifs.append(year_if.get(year,0))
+
+        all_ifs.append(ifs)
+
+    return [np.mean(ifs) for ifs in zip(*all_ifs)]
+
+def cal_venue_if(history_years,year_if):
+
+    ifs = []
+    for year in history_years:
+        ifs.append(history_years.get(year,0))
+
+    return ifs
 
 ## 抽取m年作为输入，n年的citationlist作为Y
-def extract_features(pathObj,m,n):
+def extract_features(pathObj,mnlist):
 
+
+    logging.info("loading data ...")
     pid_seq_authors = defaultdict(dict)
     pid_affs = defaultdict(list)
     author_year_papers = defaultdict(list)
@@ -99,11 +123,6 @@ def extract_features(pathObj,m,n):
 
         pid_year[paper_id] = int(year)
 
-    
-    ## paper ids in datasets
-    dataset_ids = [line.strip() for line in open(pathObj.dataset_id_path(m,n))]
-    logging.info('{} papers in datasets reserved loaded.'.format(len(dataset_ids)))
-
     ## 加载引用次数字典
     pid_year_citnum = json.loads(open(pathObj._paper_year_citations_path).read())
 
@@ -117,56 +136,125 @@ def extract_features(pathObj,m,n):
     author_starty = json.loads(open(pathObj._author_start_time_path).read())
 
     ## 机构随着年份的impact factor
-    ins_year_hindex = json.loads(open(pathObj._ins_year_if_path).read())
+    ins_year_if = json.loads(open(pathObj._ins_year_if_path).read())
+    ## 文章对应的机构列表
+    pid_inses = json.loads(open(pathObj._paper_ins_path).read())
 
     ## 会议随着年份的impact factor
-    venue_year_hindex = json.loads(open(pathObj._venue_year_if_path).read())
+    venue_year_if = json.loads(open(pathObj._venue_year_if_path).read())
+    ## 文章对应的venue id 
+    pid_vid = json.loads(open(pathObj._paper_venueid_path).read())
 
-    ## 每一篇论文抽取特征
-    for pid in dataset_ids:
+    ## 每年论文总数量变化
+    year_pnum_t = json.loads(open(pathObj._field_paper_num_dis_path).read())
 
-        year = int(pid_year[pid])
 
-        history_years = [year+d for d in range(m)]
+    for m,n in mnlist:
+        ## paper ids in datasets
+        dataset_ids = [line.strip() for line in open(pathObj.dataset_id_path(m,n))]
+        logging.info('{} papers in datasets reserved loaded.'.format(len(dataset_ids)))
 
-        predict_years = [year+m+d for d in range(n)]
+        ## 论文ID对应特征值
+        pid_features = {}
 
-        ## 作者
-        seq_authors = pid_seq_authors[pid]
+        ## 每一篇论文抽取特征
+        for progress,pid in enumerate(dataset_ids):
 
-        ## 引用次数
-        his_citations = extract_citations(history_years,pid_year_citnum[pid])
+            if progress%10000:
+                logging.info('progress {}/{} ...'.format(progress,len(dataset_ids)))
 
-        ## 预测的引用次数
-        predict_citations = extract_citations(predict_years,pid_year_citnum[pid])
+            year = int(pid_year[pid])
 
-        ## h index 相关特征
-        his_first_hix,his_avg_hix =  extract_hindex_features(history_years,seq_authors,author_year_hindex)
+            history_years = [year+d for d in range(m)]
 
-        ## 文章数量相关特征 
-        his_first_pnum,his_avg_pnum = extract_author_pnum(history_years,seq_authors,author_year_pnum)
+            predict_years = [year+m+d for d in range(n)]
 
-        ## 作者数量
-        au_num = len(seq_authors)
+            ## 作者
+            seq_authors = pid_seq_authors[pid]
 
-        ## 作者的平均研究年龄
-        avg_career_length = avg_author_career_length(year,seq_authors,author_starty)
+            ## ins的列表
+            inses = pid_inses[pid]
 
+            ## venue id 
+            vid = pid_vid.get(pid,None)
+
+            s_features = {}
+
+            ## 引用次数
+            his_citations = extract_citations(history_years,pid_year_citnum[pid])
+
+            s_features['hist_cits'] = his_citations
+
+            ## 预测的引用次数
+            predict_citations = extract_citations(predict_years,pid_year_citnum[pid])
+
+            s_features['Y'] = predict_citations
+
+
+            ## h index 相关特征
+            his_first_hix,his_avg_hix =  extract_hindex_features(history_years,seq_authors,author_year_hindex)
+
+            s_features['a-first-hix'] = his_first_hix
+            s_features['a-avg-hix'] = his_avg_hix
+
+            ## 文章数量相关特征 
+            his_first_pnum,his_avg_pnum = extract_author_pnum(history_years,seq_authors,author_year_pnum)
+
+            s_features['a-first-pnum'] = his_first_pnum
+            s_features['a-avg-pnum'] = his_avg_pnum
+
+            ## 作者数量
+            au_num = len(seq_authors)
+
+            s_features['a-num'] = au_num
+
+            ## 作者的平均研究年龄
+            avg_career_length = avg_author_career_length(year,seq_authors,author_starty)
+
+            s_features['a-career-length'] = avg_career_length
+
+            ## 机构的平均impact facor
+            ins_avg_if = avg_ins_if(history_years,inses,ins_year_if)
+
+            s_features['i-avg-if'] = ins_avg_if
+
+            ## venue的if
+            if vid is None:
+                venue_if = [0 for _ in history_years]
+            else:
+                venue_if = cal_venue_if(history_years,venue_year_if[vid])
+
+            s_features['v-if'] = venue_if
+
+            ## 
+            bak_t_pnums = [year_pnum_t[year] for year in history_years]
+
+            s_features['b-num'] = bak_t_pnums
+
+            ### 还有关于 topic相关的特征以及reference相关的特征没有添加
+
+
+            pid_features[pid] = s_features
+
+        ##保存特征json文件
+        open(pathObj.dataset_feature_path(m,n),'w').json.dumps(pid_features)
+        logging.info('dataset features saved to {}.'.format(pathObj.dataset_feature_path(m,n)))
 
 
 
 
 if __name__ == '__main__':
-    year = 2000
-    m=5
-    n=10
 
-    history_years = [year+d for d in range(m)]
+    field = 'computer science'
+    tag = 'cs'
 
-    predict_years = [year+m+d for d in range(n)]
+    pathObj = PATH(field,tag)
 
-    print(history_years)
-    print(predict_years)
+    mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10)]
+
+    extract_features(pathObj,mnlist)
+
+    
 
 
 
