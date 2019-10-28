@@ -160,7 +160,7 @@ def extract_features(pathObj,mnlist):
         for progress,pid in enumerate(dataset_ids):
 
             if progress%100000==0:
-                logging.info('progress {}/{},{} pid features extracted ...'.format(progress,len(dataset_ids),len(pid_featrues)))
+                logging.info('progress {}/{},{} pid features extracted ...'.format(progress,len(dataset_ids),len(pid_features)))
 
             if pid_year.get(pid,None) is None:
                 continue
