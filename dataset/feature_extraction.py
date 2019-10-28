@@ -107,7 +107,7 @@ def extract_features(pathObj,mnlist):
     logging.info("loading data ...")
     pid_seq_authors = defaultdict(dict)
     pid_affs = defaultdict(list)
-    author_year_papers = defaultdict(list)
+    # author_year_papers = defaultdict(defaultdict(list))
     pid_year = {}
     for line in open(pathObj._paper_author_aff_path):
         paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
@@ -119,7 +119,7 @@ def extract_features(pathObj,mnlist):
 
         pid_affs[paper_id].append(aff_id)
 
-        author_year_papers[author_id][int(year)].append(paper_id)
+        # author_year_papers[author_id][int(year)].append(paper_id)
 
         pid_year[paper_id] = int(year)
 
