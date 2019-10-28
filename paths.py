@@ -40,7 +40,7 @@ class PATH:
         self._author_year_hix_path = 'data/author_year_hix_{}.json'.format(self._field_tag)
 
         ### 作者每年发表的文章数量
-        pathObj._author_year_papernum_path = 'data/author_year_pnum_{}.json'.format(self._field_tag)
+        self._author_year_papernum_path = 'data/author_year_pnum_{}.json'.format(self._field_tag)
 
         ### 作者研究开始的年份
         self._author_start_time_path = 'data/_author_start_time_{}.json'.format(self._field_tag)

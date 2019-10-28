@@ -78,7 +78,7 @@ def extract_features(pathObj,m,n):
     pid_year_citnum = json.loads(open(pathObj._paper_year_citations_path).read())
 
     ## 加载作者文章数量
-    
+    author_year_pnum = json.loads(ope)
 
     ## 每一篇论文抽取特征
     for pid in dataset_ids:
