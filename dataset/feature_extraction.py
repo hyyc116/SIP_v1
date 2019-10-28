@@ -103,7 +103,6 @@ def cal_venue_if(history_years,year_if):
 ## 抽取m年作为输入，n年的citationlist作为Y
 def extract_features(pathObj,mnlist):
 
-
     logging.info("loading data ...")
     pid_seq_authors = defaultdict(dict)
     pid_affs = defaultdict(list)
@@ -160,8 +159,11 @@ def extract_features(pathObj,mnlist):
         ## 每一篇论文抽取特征
         for progress,pid in enumerate(dataset_ids):
 
-            if progress%10000:
+            if progress%100000==0:
                 logging.info('progress {}/{} ...'.format(progress,len(dataset_ids)))
+
+            if pid_year.get(pid,None) is None:
+                continue
 
             year = int(pid_year[pid])
 
@@ -238,7 +240,7 @@ def extract_features(pathObj,mnlist):
 
         ##保存特征json文件
         open(pathObj.dataset_feature_path(m,n),'w').json.dumps(pid_features)
-        logging.info('dataset features saved to {}.'.format(pathObj.dataset_feature_path(m,n)))
+        logging.info('{} dataset features saved to {}.'.format(len(pid_featrues),pathObj.dataset_feature_path(m,n)))
 
 
 
