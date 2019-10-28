@@ -148,10 +148,15 @@ def extract_features(pathObj,mnlist):
     year_pnum_t = json.loads(open(pathObj._field_paper_num_dis_path).read())
 
 
+    pidset_with_vid = set(pid_vid.keys())
+    pidset_with_aff = set(pid_seq_authors.keys())
+
     for m,n in mnlist:
         ## paper ids in datasets
         dataset_ids = [line.strip() for line in open(pathObj.dataset_id_path(m,n))]
         logging.info('{} papers in datasets reserved loaded.'.format(len(dataset_ids)))
+
+        logging.info('{} papers with venue and aff.'.format(len(pidset_with_aff&pidset_with_vid&set(dataset_ids))))
 
         ## 论文ID对应特征值
         pid_features = {}
