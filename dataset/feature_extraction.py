@@ -165,9 +165,9 @@ def extract_features(pathObj,mnlist):
 
             year = int(pid_year[pid])
 
-            history_years = [year+d for d in range(m)]
+            history_years = [str(year+d) for d in range(m)]
 
-            predict_years = [year+m+d for d in range(n)]
+            predict_years = [str(year+m+d) for d in range(n)]
 
             ## 作者
             seq_authors = pid_seq_authors[pid]
