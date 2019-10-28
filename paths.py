@@ -36,6 +36,9 @@ class PATH:
         ### 论文每年的引用次数
         self._paper_year_citations_path = 'data/paper_year_citation_{}.txt'.format(self._field_tag)
 
+        ### 论文对应的inses
+        self._paper_ins_path = 'data/paper_ins_{}.json'.format(self._field_tag)
+
         ### 作者h-index随着时间的变化
         self._author_year_hix_path = 'data/author_year_hix_{}.json'.format(self._field_tag)
 
