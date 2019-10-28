@@ -359,6 +359,8 @@ def hindex_of_au_ins(pathObj):
     author_year_paper = defaultdict(lambda:defaultdict(list))
     ins_year_paper = defaultdict(lambda:defaultdict(list))
 
+    author_year_papernum = defaultdict(lambda:defaultdict(int))
+
     ## 论文与作者关系
     for line in open(pathObj._paper_author_aff_path):
         paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
@@ -369,10 +371,14 @@ def hindex_of_au_ins(pathObj):
         if author_id!='':
             author_year_paper[author_id][int(year)].append(paper_id)
 
+            author_year_papernum[author_id][int(year)]+=1
+
         if aff_id!='':
             ins_year_paper[aff_id][int(year)].append(paper_id)
 
-    logging.info('Stat author hindex ...')
+    open(pathObj._author_year_papernum_path,'w').write(json.dumps(author_year_papernum))
+
+    logging.info('author paper num saved to {} , Stat author hindex ...'.format(pathObj._author_year_papernum_path))
 
     author_starty = {}
     ## 作者的h-index 以及 career的长度进行计算
@@ -567,8 +573,8 @@ if __name__ == '__main__':
 
     # read_paper_authors(pathObj)
 
-    # hindex_of_au_ins(pathObj)
-    venue_if(pathObj)
+    hindex_of_au_ins(pathObj)
+    # venue_if(pathObj)
 
     logging.info('done')
 

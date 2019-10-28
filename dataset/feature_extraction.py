@@ -10,24 +10,31 @@ from paths import PATH
 
 def extract_hindex_features(pid,history_years,pid_seq_authors,author_year_hindex):
 
-    ## 发表年份
-    published_year = pid_year[pid]
 
-    ## 第一作者的hindex变化
-    first_a_hindex_year_hindex = author_year_hindex[pid_seq_authors[pid][1]]
-
-    for year in history_years:
-
-        pass
-
-
-
-
+    ## 所有作者的平均hindex
+    all_hindex = []
     ## average hindex
-    for seq,author in pid_seq_authors[pid]:
+    for i,seq in enumerate(sorted(pid_seq_authors[pid].keys())):
 
-        pass
+        author = pid_seq_authors[pid][seq]
 
+        year_hindex = author_year_hindex[author]
+
+        author_hindex= []
+        for year in history_years:
+            author_hindex.append(year_hindex[year])
+
+        ## 第一个就是第一作者，防止出现数据库中seq缺失的问题
+        if i==0:
+            first_hindex = author_hindex
+
+        all_hindex.append(author_hindex)
+
+
+    ## 求平均值
+    avg_hindex = [np.mean(hixs) for hixs in zip(*all_hindex)]
+
+    return first_hindex,avg_hindex
 
 def extract_citations(years,year_citnum):
 
@@ -70,6 +77,9 @@ def extract_features(pathObj,m,n):
     ## 加载引用次数字典
     pid_year_citnum = json.loads(open(pathObj._paper_year_citations_path).read())
 
+    ## 加载作者文章数量
+    
+
     ## 每一篇论文抽取特征
     for pid in dataset_ids:
 
@@ -86,15 +96,13 @@ def extract_features(pathObj,m,n):
         predict_citations = extract_citations(predict_years,pid_year_citnum[pid])
 
         ## h index 相关特征
-        extract_hindex_features(pid,history_years,pid_seq_authors,author_year_hindex)
+        his_first_hix,his_avg_hix =  extract_hindex_features(pid,history_years,pid_seq_authors,author_year_hindex)
+
+        ## 文章数量相关特征 
 
 
 
 
-
-    ## 作者特征
-
-    pass
 
 if __name__ == '__main__':
     year = 2000
