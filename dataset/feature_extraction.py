@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
     mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10)]
 
-    extract_features(pathObj,mnlist)
+    extract_features(pathObj,mn_list)
 
     
 
