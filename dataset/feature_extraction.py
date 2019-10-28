@@ -96,7 +96,7 @@ def cal_venue_if(history_years,year_if):
 
     ifs = []
     for year in history_years:
-        ifs.append(history_years.get(year,0))
+        ifs.append(year_if.get(year,0))
 
     return ifs
 
