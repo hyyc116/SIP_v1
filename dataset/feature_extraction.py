@@ -239,7 +239,7 @@ def extract_features(pathObj,mnlist):
             pid_features[pid] = s_features
 
         ##保存特征json文件
-        open(pathObj.dataset_feature_path(m,n),'w').dumps(pid_features)
+        open(pathObj.dataset_feature_path(m,n),'w').write(json.dumps(pid_features))
         logging.info('{} dataset features saved to {}.'.format(len(pid_featrues),pathObj.dataset_feature_path(m,n)))
 
 
