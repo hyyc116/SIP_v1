@@ -70,7 +70,7 @@ class PATH:
         return 'data/sip_m{}_n{}_ids_{}.txt'.format(m,n,self._field_tag)
 
     def dataset_feature_path(self,m,n):
-        return 'data/sip_m{}_n{}_ids_{}.txt'.format(m,n,self._field_tag)
+        return 'data/sip_m{}_n{}_ids_{}.json'.format(m,n,self._field_tag)
 
 
 

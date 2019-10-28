@@ -160,7 +160,7 @@ def extract_features(pathObj,mnlist):
         for progress,pid in enumerate(dataset_ids):
 
             if progress%100000==0:
-                logging.info('progress {}/{} ...'.format(progress,len(dataset_ids)))
+                logging.info('progress {}/{},{} pid features extracted ...'.format(progress,len(dataset_ids),len(pid_featrues)))
 
             if pid_year.get(pid,None) is None:
                 continue
@@ -239,7 +239,7 @@ def extract_features(pathObj,mnlist):
             pid_features[pid] = s_features
 
         ##保存特征json文件
-        open(pathObj.dataset_feature_path(m,n),'w').json.dumps(pid_features)
+        open(pathObj.dataset_feature_path(m,n),'w').dumps(pid_features)
         logging.info('{} dataset features saved to {}.'.format(len(pid_featrues),pathObj.dataset_feature_path(m,n)))
 
 
