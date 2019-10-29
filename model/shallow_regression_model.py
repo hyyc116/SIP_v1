@@ -13,6 +13,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
 
 
 ## 首先抽取特征,根据数据集构建训练集，测试集
@@ -32,6 +33,8 @@ def construct_datasets(pathObj,m,n):
 
     valid_X = []
     valid_Y = []
+
+    test_sorted_ids = []
 
     for pid in pid_features.keys():
 
@@ -62,6 +65,7 @@ def construct_datasets(pathObj,m,n):
         X = [float(x) for x in X]
 
         if pid in testing_ids:
+            test_sorted_ids.append(pid)
             test_X.append(X)
             test_Y.append(Y)
         elif pid in validing_ids:
@@ -73,7 +77,7 @@ def construct_datasets(pathObj,m,n):
 
     logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_X),len(test_X),len(valid_X)))
 
-    return train_X,train_Y,test_X,test_Y,valid_X,valid_Y
+    return train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids
 
 ## 训练模型
 def train_Linear(train_X,train_Y):
@@ -100,7 +104,7 @@ def train_Linear(train_X,train_Y):
     return models
 
 ## 训练模型
-def train_SVR(train_X,train_Y):
+def train_RFR(train_X,train_Y):
 
     ## 对于序列预测来讲，每一个时间点需要训练一个模型，因此需要根据Y的宽度确定模型的数量
     size = len(train_Y[0])
@@ -116,10 +120,12 @@ def train_SVR(train_X,train_Y):
 
         train_y = np.array(train_y)
 
-        svr = SVR(C=1.0, epsilon=0.2,verbose=True,kernel='linear')
-        svr.fit(train_X, train_y)
+        # svr = SVR(kernel='rbf', C=10, gamma=0.1, epsilon=.1)
 
-        models.append(svr)
+        regr = RandomForestRegressor(max_depth=3, random_state=0,n_estimators=100,n_jobs=-1)
+        regr.fit(train_X, train_y)
+
+        models.append(regr)
 
     return models
 
@@ -139,28 +145,48 @@ def evaluate_model(models,test_X,test_Y):
 
     ## 衡量predict_Y和test_Y之间的关系
 
-    return r2_score(test_Y, predict_Y, multioutput='variance_weighted'),mean_absolute_error(test_Y, predict_Y),mean_squared_error(test_Y, predict_Y)
+    return r2_score(test_Y, predict_Y, multioutput='variance_weighted'),mean_absolute_error(test_Y, predict_Y),mean_squared_error(test_Y, predict_Y),predict_Y
 
 
 def train_and_evaluate(pathObj,mn_list):
-    ## m n list
-    for m,n in mn_list:
-        logging.info('train dataset sip-m{}n{} ..'.format(m,n))
 
-        train_X,train_Y,test_X,test_Y,valid_X,valid_Y = construct_datasets(pathObj,m,n)
+    ## m n list
+    lines = ['dataset,model,r2,mae,mse']
+    shallow_result = defaultdict(dict)
+    for m,n in mn_list:
+        dataset = 'sip-m{}n{}'.format(m,n)
+        logging.info('train dataset sip-m{}n{} ..'.format(m,n))
+        train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids = construct_datasets(pathObj,m,n)
+        
+        shallow_result[dataset]['IDS'] = test_sorted_ids
 
         # print(train_X[:2])
         # print(train_Y[:2])
 
-        models = train_SVR(train_X,train_Y)
-        r2,mae,mse =evaluate_model(models,test_X,test_Y)
+        models = train_RFR(train_X,train_Y)
+        r2,mae,mse,predict_Y =evaluate_model(models,test_X,test_Y)
 
-        print('SVR====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+        shallow_result[dataset]['RFR']=predict_Y
+
+        print('RFR====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+
+        lines.append('sip-m{}n{},{},{},{},{}'.format(m,n,'RFR',r2,mae,mse))
 
         models = train_Linear(train_X,train_Y)
-        r2,mae,mse =evaluate_model(models,test_X,test_Y)
+        r2,mae,mse,predict_Y =evaluate_model(models,test_X,test_Y)
+        shallow_result[dataset]['LR']=predict_Y
+
+        lines.append('sip-m{}n{},{},{},{},{}'.format(m,n,'LR',r2,mae,mse))
 
         print('Linear====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+
+    open(pathObj._shallow_result_summary,'w').write('\n'.join(lines))
+
+    logging.info('result summary saved.')
+
+    open(pathObj._shallow_testing_prediction_result,'w').write(json.dumps(shallow_result))
+
+    logging.info('result saved.')
 
 
 

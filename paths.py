@@ -70,6 +70,13 @@ class PATH:
 
 
 
+        ''' 结果文件'''
+        self._shallow_result_summary = 'data/shallow_result_summary_{}.csv'.format(self._field_tag)
+
+        ## 预测id对应的结果
+        self._shallow_testing_prediction_result = 'data/shallow_prediction_result_{}.json'.format(self._field_tag)
+
+
 
     def dataset_id_path(self,m,n):
         return 'data/sip_m{}_n{}_ids_{}.txt'.format(m,n,self._field_tag)
