@@ -61,6 +61,8 @@ def extract_author_pnum(history_years,seq_authors,author_year_pnum):
 
             first_author_pnum = pnums
 
+        all_pnums.append(pnums)
+
     avg_pnums = [np.mean(pnums) for pnums in zip(*all_pnums)]
 
     return first_author_pnum,avg_pnums

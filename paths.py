@@ -55,8 +55,6 @@ class PATH:
         self._venue_year_if_path = 'data/venue_year_if_{}.json'.format(self._field_tag)
 
 
-
-
         ''' ============== 图片列表 =========='''
         ### 随时间的文章数量变化曲线
         self._field_paper_num_dis_over_time_fig = 'fig/paper_num_dis_over_time_{}.png'.format(self._field_tag)
@@ -66,11 +64,24 @@ class PATH:
 
 
 
+        ''' 特征文件 '''
+        self._testing_pid_path = 'data/test_pids_{}.txt'.format(self._field_tag)
+        self._validing_pid_path = 'data/valid_pids_{}.txt'.format(self._field_tag)
+
+
+
+
     def dataset_id_path(self,m,n):
         return 'data/sip_m{}_n{}_ids_{}.txt'.format(m,n,self._field_tag)
 
     def dataset_feature_path(self,m,n):
         return 'data/sip_m{}_n{}_features_{}.json'.format(m,n,self._field_tag)
+
+    def loads_json(self,path):
+        return json.loads(open(path).read())
+
+    def read_file(self,path):
+        return [line.strip() for line in open(path)]
 
 
 
