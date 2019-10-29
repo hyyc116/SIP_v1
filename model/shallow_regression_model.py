@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    mn_list = [(3,1)]
+    mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10)]
 
     train_and_evaluate(pathObj,mn_list)
 
