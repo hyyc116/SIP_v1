@@ -39,7 +39,7 @@ def construct_datasets(pathObj,m,n):
         feature = pid_features[pid]
 
         X=[]
-        Y=feature['Y']
+        Y=[float(y) for y in feature['Y']]
 
         ##文章被引用的历史
         X.extend(feature['hist_cits'])
@@ -57,7 +57,9 @@ def construct_datasets(pathObj,m,n):
         ## 期刊影响力
         X.extend(feature['v-if'])
         ## 背景
-        X.extend(features['b-num'])
+        X.extend(feature['b-num'])
+
+        X = [float(x) for x in X]
 
         if pid in testing_ids:
             test_X.append(X)
@@ -74,7 +76,7 @@ def construct_datasets(pathObj,m,n):
     return train_X,train_Y,test_X,test_Y,valid_X,valid_Y
 
 ## 训练模型
-def train_SVR(train_X,train_Y):
+def train_Linear(train_X,train_Y):
 
     ## 对于序列预测来讲，每一个时间点需要训练一个模型，因此需要根据Y的宽度确定模型的数量
     size = len(train_Y[0])
@@ -97,6 +99,30 @@ def train_SVR(train_X,train_Y):
 
     return models
 
+## 训练模型
+def train_SVR(train_X,train_Y):
+
+    ## 对于序列预测来讲，每一个时间点需要训练一个模型，因此需要根据Y的宽度确定模型的数量
+    size = len(train_Y[0])
+    logging.info('length of y is {}.'.format(size))
+    ## 每一列都是对应时间序列的对应的Y值
+    train_Ys = zip(*train_Y)
+    train_X = np.array(train_X)
+
+    models = []
+    ## 每一列训练一个model
+    for i,train_y in enumerate(train_Ys):
+        logging.info('train model for position {} ...'.format(i))
+
+        train_y = np.array(train_y)
+
+        svr = SVR(C=1.0, epsilon=0.2,verbose=True,kernel='linear')
+        svr.fit(train_X, train_y)
+
+        models.append(svr)
+
+    return models
+
 
 
 ##评测模型
@@ -104,9 +130,12 @@ def evaluate_model(models,test_X,test_Y):
 
     predict_Y = []
     for model in models:
-        predict_Y.append(model.predict(test_X))
+        predict_Y.append(list(model.predict(test_X)))
 
-    predict_Y = zip(predict_Y)
+    predict_Y = list(zip(*predict_Y))
+
+    # print(test_Y[:2])
+    # print(predict_Y[:2])
 
     ## 衡量predict_Y和test_Y之间的关系
 
@@ -120,14 +149,19 @@ def train_and_evaluate(pathObj,mn_list):
 
         train_X,train_Y,test_X,test_Y,valid_X,valid_Y = construct_datasets(pathObj,m,n)
 
-        print(train_X[:2])
-        print(train_Y[:2])
+        # print(train_X[:2])
+        # print(train_Y[:2])
 
         models = train_SVR(train_X,train_Y)
-
         r2,mae,mse =evaluate_model(models,test_X,test_Y)
 
-        print('R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+        print('SVR====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+
+        models = train_Linear(train_X,train_Y)
+        r2,mae,mse =evaluate_model(models,test_X,test_Y)
+
+        print('Linear====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+
 
 
 if __name__ == '__main__':
