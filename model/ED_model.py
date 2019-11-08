@@ -120,7 +120,7 @@ class Encoder(tf.keras.Model):
 
         # self._predict = predict
 
-        self._gru_dropout = tf.keras.layers.Dropout(rate=0.2)
+        self._gru_dropout = tf.keras.layers.Dropout(rate=0.5)
 
     ##定义前向传播方法
     def call(self,x,hidden,predict = False):
@@ -151,7 +151,7 @@ class Decoder(tf.keras.Model):
 
         # self._predict = predict
 
-        self._rnn_dropout = tf.keras.layers.Dropout(rate=0.2)
+        self._rnn_dropout = tf.keras.layers.Dropout(rate=0.5)
 
         ## 回归 每一步输出一个数字
         self._fc = tf.keras.layers.Dense(1)
@@ -208,8 +208,8 @@ class Weighted_Decoder(tf.keras.Model):
         ## 对静态特征进行抽取
         self._static_fc = tf.keras.layers.Dense(self._dec_units,activation = 'sigmoid')
 
-        self._rnn_dropout = tf.keras.layers.Dropout(rate=0.2)
-        self._static_fc_dropout = tf.keras.layers.Dropout(rate=0.2)
+        self._rnn_dropout = tf.keras.layers.Dropout(rate=0.5)
+        self._static_fc_dropout = tf.keras.layers.Dropout(rate=0.5)
 
         ## 回归 每一步输出一个数字
         self._fc = tf.keras.layers.Dense(1)
@@ -304,8 +304,8 @@ class S2SM:
             self._model_name = 'ED_model'
 
         ## optimizer
-        self._optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.001,clipvalue=1)
-        # self._optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+        # self._optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.001,clipvalue=1)
+        self._optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
 
         ## 模型的保存位置

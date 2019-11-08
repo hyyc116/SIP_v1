@@ -75,8 +75,8 @@ class DecoderAtt(tf.keras.Model):
         ## 对静态特征进行抽取
         self._static_fc = tf.keras.layers.Dense(self._dec_units,activation = 'tanh')
 
-        self._rnn_dropout = tf.keras.layers.Dropout(rate=0.2)
-        self._static_fc_dropout = tf.keras.layers.Dropout(rate=0.2)
+        self._rnn_dropout = tf.keras.layers.Dropout(rate=0.5)
+        self._static_fc_dropout = tf.keras.layers.Dropout(rate=0.5)
 
         ## 回归 每一步输出一个数字
         self._fc = tf.keras.layers.Dense(1)
@@ -147,8 +147,8 @@ class S2SM:
         self._model_name = 'ED_ATT_model'
 
         ## optimizer
-        self._optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.001,clipvalue=1)
-        # self._optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+        # self._optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0001)
+        self._optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
 
         ## 模型的保存位置
@@ -405,14 +405,11 @@ if __name__ == '__main__':
     pathObj = PATH(field,tag)
 
     # mn_list=[(5,10),(3,10),(5,1),(5,5),(3,5),(5,3),(3,3),(3,1)]
-    mn_list=[(5,10),(5,5),(5,3)]
-
+    # mn_list=[(5,10),(5,5),(5,3)]
+    mn_list=[(5,10),(3,10),(3,5),(5,5),(5,3),(3,3),(5,1),(3,1)]
 
     for m,n in mn_list:
 
         s2sm = S2SM(pathObj,m,n)
-
-        # s2sm.reload_latest_checkpoints()
-
         s2sm.train()
 

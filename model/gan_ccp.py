@@ -146,12 +146,12 @@ class GANCCP:
         self._model_name = 'GANCCP'
 
         ## pre train
-        self._gen_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-        self._dis_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+        self._gen_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        self._dis_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
         ## optimizer
-        self._gen_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-        self._dis_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+        self._gen_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        self._dis_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
         ## 模型的保存位置
         self._checkpoint_dir = './trainning_checkpoints_{}_{}_{}'.format(self._model_name, m,n)
