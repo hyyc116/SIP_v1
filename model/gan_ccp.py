@@ -265,7 +265,7 @@ class GANCCP:
             print('Time taken for 1 epoch {} sec\n'.format(time.time()-start))
 
             ## 如果连续10个回合验证集的loss都不能大于目前保存最好的模型，停止训练
-            if early_stop_count>=15:
+            if early_stop_count>=5:
                 break
 
         ## 将训练过程中loss进行保存
@@ -282,6 +282,26 @@ class GANCCP:
         #     summary = test_result['summary']
         #     f.write(summary+'\n')
         #     logging.info('Final performace on test is {}.'.format(summary))
+
+        def pretrain_dis():
+
+            EPOCHS = 10
+
+            ## 使用pretrain的generator生成fake data
+            prdicted_Ys = []
+            
+            ## 使用pretrain的generator进行fake data的生成       
+            for (batch,(dynamic_features,static_features,targ)) in enumerate(self._dataset.take(self._n_batchs)):
+                # self.gen_predict(dynamic_features,static_features,targ)
+
+                all_predictions = self._generator(dynamic_X,static_X,predict=True)
+
+                predicted_Ys.append(all_predictions)
+
+            predicted_Ys = tf.concat(predicted_Ys,axis=0)
+
+            ## 将fake data和real data进行融合
+            
 
 
     def save_losses(self,loss_obj,model):
