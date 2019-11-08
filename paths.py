@@ -1,5 +1,6 @@
 #coding:utf-8
 import json
+import logging
 class PATH:
 
 
@@ -71,11 +72,14 @@ class PATH:
 
 
         ''' 结果文件'''
-        self._shallow_result_summary = 'data/shallow_result_summary_{}.csv'.format(self._field_tag)
-
+        self._shallow_result_summary = 'result/shallow_result_summary_{}.csv'.format(self._field_tag)
+        self._deep_result_summary = 'result/deep_result_summary_{}.csv'.format(self._field_tag)
         ## 预测id对应的结果
-        self._shallow_testing_prediction_result = 'data/shallow_prediction_result_{}.json'.format(self._field_tag)
+        self._shallow_testing_prediction_result = 'result/shallow_prediction_result_{}.json'.format(self._field_tag)
 
+
+    def deep_result_prediction_path(self,model,m,n):
+        return 'result/deep_sip_m{}n{}_{}_{}.json'.format(m,n,model,self._field_tag)
 
 
     def dataset_id_path(self,m,n):
@@ -89,6 +93,13 @@ class PATH:
 
     def read_file(self,path):
         return [line.strip() for line in open(path)]
+
+    def losses_file(self,m,n,model):
+        return 'losses/sip_m{}n{}_{}_{}_loss.json'.format(m,n,model,self._field_tag)
+
+    def save_json(self,path,obj):
+        open(path,'w').write(json.dumps(obj))
+        logging.info('json obj saved to {}.'.format(path))
 
 
 

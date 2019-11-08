@@ -43,7 +43,7 @@ def get_test_valid_set_ids(pathObj):
     print(pids[:10])
 
     ## 选择11000个作为测试验证机和
-    selected_pids =  np.random.choice(pids,11000,replace=False)
+    selected_pids =  np.random.choice(pids,20000,replace=False)
 
     test_pids = np.random.choice(selected_pids,10000,replace=False)
 

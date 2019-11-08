@@ -1,6 +1,6 @@
 #coding:utf-8
 '''
-本文完成SVR以及LR的特征抽取、模型构建、训练、效果评测
+本文完成RANDOM FOREST RE以及LR的特征抽取、模型构建、训练、效果评测
 
 '''
 import sys
@@ -77,7 +77,33 @@ def construct_datasets(pathObj,m,n):
 
     logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_X),len(test_X),len(valid_X)))
 
+    train_X,test_X,valid_X = scale_dataset(train_X,test_X,valid_X)
+    train_Y,test_Y,valid_Y = scale_dataset(train_Y,test_Y,valid_Y)
+
     return train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids
+
+
+def scale_dataset(train,test,valid):
+
+    train = np.array(train)
+    test = np.array(test)
+    valid = np.array(valid)
+
+    logging.info('as array done. shape of array is {}'.format(train.shape))
+    mean = np.mean(train,axis=0)
+    std = np.std(train,axis=0)
+    return (train-mean)/std,(test-mean)/std,(valid-mean)/std
+    # return train,test,valid
+
+def unscale_dataset(train,result):
+
+    train = np.array(train)
+
+    mean = np.mean(train,axis=0)
+    std = np.std(train,axis = 0)
+
+    return result*std+mean
+
 
 ## 训练模型
 def train_Linear(train_X,train_Y):
