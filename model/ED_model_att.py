@@ -120,7 +120,8 @@ class S2SM:
 
     def __init__(self,pathObj,m,n):
         ## 加载数据
-        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,self._valid_Y,self._test_sorted_ids = construct_datasets(pathObj,m,n)
+        scale = True
+        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,self._valid_Y,self._test_sorted_ids = construct_datasets(pathObj,m,n,scale)
 
         print('train model on dataset sip-m{}n{}.'.format(m,n))
 
@@ -188,7 +189,7 @@ class S2SM:
 
                 loss += loss_function(tf.expand_dims(targ[:,t],1),predictions)
 
-                rn = np.random.random_sample()
+                # rn = np.random.random_sample()
 
                 ## 时间t的标准结果作为t+1的x
                 # if rn<0.1:

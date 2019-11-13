@@ -40,14 +40,21 @@ def get_test_valid_set_ids(pathObj):
 
     pids = list(pid_features.keys())
 
-    print(pids[:10])
+    print(len(pids)*0.6)
+
+    test_percent = 0.4
+
+    test_vs_valid = 3
+
+    test_num = int(len(pids)*test_percent)
+    valid_num = int(test_num/3)
 
     ## 选择11000个作为测试验证机和
-    selected_pids =  np.random.choice(pids,20000,replace=False)
+    selected_pids =  np.random.choice(pids,test_num,replace=False)
 
-    test_pids = np.random.choice(selected_pids,10000,replace=False)
+    valid_pids = np.random.choice(selected_pids,valid_num,replace=False)
 
-    valid_pids = list(set(selected_pids)-set(test_pids))
+    test_pids = list(set(selected_pids)-set(valid_pids))
 
     logging.info('{} test_pids selected, {} valid pids selected.'.format(len(test_pids),len(valid_pids)))
 

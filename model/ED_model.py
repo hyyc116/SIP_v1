@@ -21,7 +21,7 @@ from shallow_regression_model import scale_dataset
 tf.keras.backend.set_floatx('float64')
 
 ## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_datasets(pathObj,m,n):
+def construct_datasets(pathObj,m,n,scale=True):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
     validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
@@ -87,11 +87,11 @@ def construct_datasets(pathObj,m,n):
     logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_Y),len(test_Y),len(valid_Y)))
 
     # print(train_Y[:64])
-    train_dynamic_X,test_dynamic_X,valid_dynamic_X = scale_dataset(train_dynamic_X,test_dynamic_X,valid_dynamic_X)
+    train_dynamic_X,test_dynamic_X,valid_dynamic_X,dx_mean,sx_std = scale_dataset(train_dynamic_X,test_dynamic_X,valid_dynamic_X,scale)
 
-    train_static_X,test_static_X,valid_static_X = scale_dataset(train_static_X,test_static_X,valid_static_X)
+    train_static_X,test_static_X,valid_static_X,sx_mean,sx_std = scale_dataset(train_static_X,test_static_X,valid_static_X,scale)
 
-    train_Y,test_Y,valid_Y = scale_dataset(train_Y,test_Y,valid_Y)
+    train_Y,test_Y,valid_Y,y_mean,y_std = scale_dataset(train_Y,test_Y,valid_Y,scale)
 
     logging.info('scale done')
 
@@ -110,16 +110,11 @@ def gru(units):
 
 class Encoder(tf.keras.Model):
 
-    def __init__(self,enc_units,batch_sz):
+    def __init__(self,enc_units,batch_sz=None):
         super(Encoder,self).__init__()
-
-        self._enc_units = enc_units
         self._batch_sz = batch_sz
-
+        self._enc_units = enc_units
         self._gru = gru(self._enc_units)
-
-        # self._predict = predict
-
         self._gru_dropout = tf.keras.layers.Dropout(rate=0.5)
 
     ##定义前向传播方法
@@ -148,8 +143,6 @@ class Decoder(tf.keras.Model):
         self._dec_units = dec_units
 
         self._gru = gru(self._dec_units)
-
-        # self._predict = predict
 
         self._rnn_dropout = tf.keras.layers.Dropout(rate=0.5)
 
@@ -259,6 +252,9 @@ class Weighted_Decoder(tf.keras.Model):
 # huber = tf.keras.losses.Huber(delta=10)
 def loss_function(real,pred):
 
+    if real.shape!=pred.shape:
+        print('ERROR: NOT SAME SHAPE IN RESULT.')
+
     loss = tf.keras.losses.MSE(real, pred)
 
     # loss = tf.losses.logcosh(real,tru)
@@ -270,8 +266,9 @@ def loss_function(real,pred):
 class S2SM:
 
     def __init__(self,pathObj,m,n,isWeighted=False):
+        scale = True
         ## 加载数据
-        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,self._valid_Y,self._test_sorted_ids = construct_datasets(pathObj,m,n)
+        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,self._valid_Y,self._test_sorted_ids = construct_datasets(pathObj,m,n,scale)
 
         print('train model on dataset sip-m{}n{}.'.format(m,n))
 
@@ -311,8 +308,16 @@ class S2SM:
         ## 模型的保存位置
         self._checkpoint_dir = './trainning_checkpoints_{}_{}_{}'.format(self._model_name, m,n)
 
+        self._avg_checkpoint_dir = './trainning_checkpoints_avg_{}_{}_{}'.format(self._model_name, m,n)
+
+
         self._checkpoint_prefix = os.path.join(self._checkpoint_dir, "ckpt")
-        self._checkpoint = tf.train.Checkpoint(optimizer=self._optimizer,encoder=self._encoder,decoder=self._decoder)
+
+        self._trackables = {}
+        self._trackables['optimizer']=self._optimizer
+        self._trackables['encoder']=self._encoder
+        self._trackables['decoder']=self._decoder
+        self._checkpoint = tf.train.Checkpoint(**self._trackables)
 
 
     def reload_latest_checkpoints(self):
@@ -419,7 +424,7 @@ class S2SM:
             ### 在实际的使用中并不能保存下最好的模型，
             ### 我们需要使用三个评价指标共同完成
             ### mae mse的前三位小数相同，并且r2更大
-            if is_better_result(mae,mse,r2,best_score):
+            if epoch>10 and is_better_result(mae,mse,r2,best_score):
 
                 # best_mae = mae if mae<best_mae else best_mae
                 # best_mse = mse if mse<best_mse else best_mse
@@ -472,7 +477,7 @@ class S2SM:
         ## validation set 进行验证
         # self._valid_static_X,self._valid_dynamic_X,self._valid_Y
 
-        valid_size = len(Y)
+        valid_size = dynamic_X.shape[0]
 
         # 初始化encoder的hideen state
         initial_state = tf.zeros((valid_size,self._units),tf.float64)
@@ -509,6 +514,82 @@ class S2SM:
         r2 = float('{:.3f}'.format(r2))
 
         return r2,mae,mse,all_predictions
+
+
+#     def averaging_checkipoints(self):
+#         logging.info('averaging models ...')
+#         average_checkpoints(self._checkpoint_dir,self._avg_checkpoint_dir,self._trackables,['encoder','decoder'],max_count=5)
+
+# def average_checkpoints(model_dir,
+#                     output_dir,
+#                     trackables,
+#                     model_keys,
+#                     max_count=8
+#                     ):
+#     """Averages object-based checkpoints.
+
+#     Args:
+#     model_dir: The directory containing checkpoints.
+#     output_dir: The directory that will contain the averaged checkpoint.
+#     trackables: A dictionary containing the trackable objects included in the
+#       checkpoint.
+#     max_count: The maximum number of checkpoints to average.
+#     model_key: The key in :obj:`trackables` that references the model.
+
+#     Returns:
+#     The path to the directory containing the averaged checkpoint.
+
+#     Raises:
+#     ValueError: if :obj:`output_dir` is the same as :obj:`model_dir`.
+#     ValueError: if a model is not found in :obj:`trackables` or is not already
+#       built.
+#     ValueError: if no checkpoints are found in :obj:`model_dir`.
+#     """
+#     if model_dir == output_dir:
+#         raise ValueError("Model and output directory must be different")
+
+#     models = []
+#     for model_key in model_keys:
+#         model = trackables.get(model_key)
+#         models.append(model)
+#         # if model is None:
+#         #     raise ValueError("%s not found in trackables %s" % (model_key, trackables))
+#         # if not model.built:
+#         #     raise ValueError("The model should be built before calling this function")
+
+#     checkpoint = tf.train.Checkpoint(**trackables)
+#     checkpoint_manager = tf.train.CheckpointManager(checkpoint, model_dir, max_to_keep=None)
+
+#     checkpoints_path = checkpoint_manager.checkpoints
+#     if not checkpoints_path:
+#         raise ValueError("No checkpoints found in %s" % model_dir)
+#     if len(checkpoints_path) > max_count:
+#         checkpoints_path = checkpoints_path[-max_count:]
+#     num_checkpoints = len(checkpoints_path)
+#     last_step = int(checkpoints_path[-1].split("-")[-1])
+
+#     logging.info("Averaging %d checkpoints...", num_checkpoints)
+#     for i, checkpoint_path in enumerate(reversed(checkpoints_path)):
+#         logging.info("Reading checkpoint %s...", checkpoint_path)
+#     if i == 0:
+#         checkpoint.restore(checkpoint_path).assert_existing_objects_matched()
+#         for model in models:
+#             for variable in model.variables:
+#                 variable.assign(variable / num_checkpoints)
+#     else:
+#         reader = tf.train.load_checkpoint(checkpoint_path)
+#         for path in six.iterkeys(reader.get_variable_to_shape_map()):
+#             for model_key in model_keys:
+#                 if not path.startswith(model_key) or ".OPTIMIZER_SLOT" in path:
+#                     continue
+#         variable_path = path.replace("/.ATTRIBUTES/VARIABLE_VALUE", "")
+#         variable = misc.index_structure(trackables, variable_path)
+#         value = reader.get_tensor(path)
+#         variable.assign_add(value / num_checkpoints)
+
+#     new_checkpoint_manager = tf.train.CheckpointManager(checkpoint, output_dir, max_to_keep=None)
+#     new_checkpoint_manager.save(checkpoint_number=last_step)
+#     return output_dir
 
 # def is_better_result(mae,mse,r2,pre_mae,pre_mse,pre_r2):
 
@@ -564,9 +645,12 @@ if __name__ == '__main__':
 
         # s2sm.reload_latest_checkpoints()
 
+        ## averaing model
+        # s2sm.averaging_checkipoints()
+
         s2sm.train()
 
-        time.sleep(1)
+        # time.sleep(1)
 
     # s2sm = S2SM(pathObj,3,3,isWeighted=True)
 

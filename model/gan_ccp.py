@@ -28,7 +28,8 @@ from ED_model_att import BahdanauAttention
 from ED_model_att import DecoderAtt
 
 from ED_model_att import is_better_result
-
+from functools import partial
+from losses import *
 
 ## Generator
 class Generator(tf.keras.Model):
@@ -60,40 +61,51 @@ class Generator(tf.keras.Model):
         for t in range(self._len_targ):
 
             predictions,dec_hidden = self._decoder(dec_input,dec_hidden,enc_output,static_features,predict=predict)
+            # print('shape:{}'.format(predictions.shape))
 
-            all_predictions.append(predictions)
+            all_predictions.append(tf.expand_dims(predictions,1))
             dec_input = predictions
 
-        return tf.cast(list(zip(*all_predictions)),tf.float64)
+        final_result = tf.concat(all_predictions,1)
+        # print('shape:{}'.format(final_result.shape))
+
+        return final_result
 
 
 ## Discriminator对论文的进行encode,然后和预测结果一起进行二类分类
 class Discriminator(tf.keras.Model):
     """docstring for Discriminator"""
     def __init__(self, units,batch_sz):
-        super(Discriminator, self).__init__()
+        super(Discriminator, self).__init__(name='discriminator_abc')
 
         self._units = units
         self._batch_sz = batch_sz
         
         ## encoder对输入进行加权
-        self._X_encoder = Encoder(self._units,self._batch_sz)
+        self._X_encoder = Encoder(self._units)
 
         ## 对静态特征进行抽取
-        self._static_fc = tf.keras.layers.Dense(self._units)
+        self._static_fc = tf.keras.layers.Dense(self._units,activation='tanh')
 
-        self._static_fc_dropout = tf.keras.layers.Dropout(rate=0.2)
+        self._static_fc_dropout = tf.keras.layers.Dropout(rate=0.5)
 
         ## Y同样是序列,使用gru对其加权
-        self._Y_encoder = Encoder(self._units,self._batch_sz)
+        self._Y_encoder = Encoder(self._units)
 
-        ## Dense 输出为0,1两个值就行分类
-        self._fc = tf.keras.layers.Dense(2)
+        ## Dense 根据输出值进行判断
+        self._fc = tf.keras.layers.Dense(self._units,activation='tanh')
+
+        self._fc_dropout = tf.keras.layers.Dropout(rate=0.5)
+
+        self._fc2 = tf.keras.layers.Dense(1)
 
     def call(self,dynamic_features,static_features,Y,predict=False):
 
         # enc_hidden = self._encoder.initialize_hidden_state()
-        initial_state = tf.zeros((Y.shape[1],self._units),tf.float64)
+        # print(dynamic_features.shape)
+        # print(static_features.shape)
+        # print(Y.shape[0])
+        initial_state = tf.zeros((Y.shape[0],self._units),tf.float64)
         ## 首先对输入进行encode
         enc_output, enc_hidden = self._X_encoder(dynamic_features,initial_state,predict=predict)
 
@@ -106,7 +118,7 @@ class Discriminator(tf.keras.Model):
         input_vector = tf.concat([enc_hidden,static_features],axis=1)
 
         ##同样对Y进行向量化
-        y_out,y_hidden = self._Y_encoder(tf.expand_dims(Y,2))             
+        y_out,y_hidden = self._Y_encoder(tf.expand_dims(Y,2),initial_state,predict=predict)             
 
         #将X Yvecor进行串联
         vector = tf.concat([input_vector,y_hidden],axis=1)
@@ -114,12 +126,22 @@ class Discriminator(tf.keras.Model):
         ## 判断结果
         output = self._fc(vector)
 
+        if predict:
+            output = self._fc_dropout(output)
+
+        output = self._fc2(output)
+
+        # print(output.shape)
+        return output
+
 
 class GANCCP:
 
     def __init__(self,pathObj,m,n):
         ## 加载数据
-        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,self._valid_Y,self._test_sorted_ids = construct_datasets(pathObj,m,n)
+
+        scale=True
+        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,self._valid_Y,self._test_sorted_ids = construct_datasets(pathObj,m,n,scale)
 
         ## 构建预训练数据
 
@@ -134,7 +156,7 @@ class GANCCP:
         self._batch_sz = 512
         self._buffer_size = len(self._train_Y)
         self._n_batchs =self._buffer_size//self._batch_sz
-        # self._n_batchs=40
+        # self._n_batchs=10
 
         ## 数据集
         self._dataset = tf.data.Dataset.from_tensor_slices((self._train_dynamic_X,self._train_static_X,self._train_Y)).shuffle(self._buffer_size)
@@ -146,12 +168,33 @@ class GANCCP:
         self._model_name = 'GANCCP'
 
         ## pre train
-        self._gen_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
-        self._dis_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        self._gen_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+        # if self._mode=='GAN':
+
+        # else:
+        self._dis_pre_optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3,beta_1=0.5,beta_2=0.9)
 
         ## optimizer
-        self._gen_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
-        self._dis_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        self._gen_optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4,beta_1=0.5,beta_2=0.9)
+        self._dis_optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4,beta_1=0.5,beta_2=0.9)
+
+        ## alternative 每一次训练的epoch的大小
+        self._n_pre_generator_epoches = 1
+        self._n_pre_discriminator_epoches = 1
+        self._n_generator_epoches = 1
+        self._n_discriminator_epoches = 1
+
+        ## 交叉训练
+        self._n_epoches = 200
+
+        ## 记录不同的训练的最佳数值
+        self.best_mae = 100
+        self.best_mse = 100
+        self.best_r2 = 0
+        self.best_score = 0
+
+        self._mode = 'WGAN-GP'
+        self._penalty_weight = 10
 
         ## 模型的保存位置
         self._checkpoint_dir = './trainning_checkpoints_{}_{}_{}'.format(self._model_name, m,n)
@@ -173,33 +216,44 @@ class GANCCP:
 
         # pass
 
-    ## generator pretraining
+    def alternative_training(self):
 
-    def pretrain_gen_step(self,dynamic_features,static_features,targ):
+        self.reload_latest_checkpoints()
+        ## 首先对generator进行预训练
+        # self.train_generator(pretrain=True)
+
+        ## 使用预训练得到的数据对discriminator进行预训练
+        self.train_discriminator(pretrain=True)
+
+        ## 然后进行交叉训练
+        for epoch in range(self._n_epoches):
+
+            print('alternative TRAINING EPOCH {} ...'.format(epoch+1))
+
+            ##每次训练都会进行最优化模型的保存
+            self.train_generator(pretrain=False)
+
+            ## 每次都会输出准确率计算结果
+            self.train_discriminator(pretrain=False)
 
 
-        with tf.GradientTape() as tape:
-            predictions = self._generator(dynamic_features,static_features)
-            loss = loss_function(tf.expand_dims(targ,1),predictions)
+    def train_generator(self,pretrain = False):
 
-            variables = self._generator.trainable_variables
+        if pretrain:
+            tag = 'pretrain'
 
-            gradients =  tape.gradient(loss,variables)
+            EPOCHS = self._n_pre_generator_epoches
 
-            self._gen_pre_optimizer.apply_gradients(zip(gradients,variables))
+        else:
+            tag = 'train'
 
-        return loss
-
-
-    def pretrain_generator(self):
-
-        EPOCHS = 1000
+            EPOCHS = self._n_generator_epoches
 
         early_stop_count = 0
-        best_mae = 100
-        best_mse = 100
-        best_r2 =0
-        best_score = 0
+        # best_mae = 100
+        # best_mse = 100
+        # best_r2 =0
+        # best_score = 0
 
         train_losses = []
         valid_losses = []
@@ -216,13 +270,13 @@ class GANCCP:
 
             for (batch,(dynamic_features,static_features,targ)) in enumerate(self._dataset.take(self._n_batchs)):
 
-                batch_loss  = self.pretrain_gen_step(dynamic_features,static_features,targ)
+                batch_loss  = self.train_gen_step(dynamic_features,static_features,targ,pretrain=pretrain)
 
                 total_loss+=batch_loss
 
-                if (batch+1)%10==0 or (batch+1)==self._n_batchs:
+                if (batch+1)%50==0 or (batch+1)==self._n_batchs:
 
-                    print('GENERATOR pretraining,sip-m{}n{}, Epoch {} Batch {}/{} Loss {:.4f}'.format(self._m,self._n,epoch+1,batch+1,self._n_batchs,batch_loss.numpy()))
+                    print('{}-GENERATOR,sip-m{}n{}, Epoch {} Batch {}/{} Loss {:.4f}'.format(tag,self._m,self._n,epoch+1,batch+1,self._n_batchs,batch_loss.numpy()))
 
             total_loss = total_loss/self._n_batchs
 
@@ -232,21 +286,21 @@ class GANCCP:
             train_losses.append(float(total_loss))
             valid_losses.append(float(mae))
 
-            logging.info('sip-m{}n{}, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{},score:{:.3f},best_score:{:.3f}.'.format(self._m,self._n,epoch+1,total_loss,mae,mse,r2,r2/(mae+mse),best_score))
+            logging.info('{}-Generator,sip-m{}n{}, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{},score:{:.3f},best_score:{:.3f}.'.format(tag,self._m,self._n,epoch+1,total_loss,mae,mse,r2,r2/(mae+mse),self.best_score))
             ## 每一回合的loss小于best_loss那么就将模型存下来
             ### 在实际的使用中并不能保存下最好的模型，
             ### 我们需要使用三个评价指标共同完成
             ### mae mse的前三位小数相同，并且r2更大
-            if is_better_result(mae,mse,r2,best_mae,best_mse,best_r2):
+            if is_better_result(mae,mse,r2,self.best_mae,self.best_mse,self.best_r2):
 
-                best_mae = mae if mae<best_mae else best_mae
-                best_mse = mse if mse<best_mse else best_mse
-                best_r2 = r2 if r2>best_r2 else best_r2
+                self.best_mae = mae if mae<self.best_mae else self.best_mae
+                self.best_mse = mse if mse<self.best_mse else self.best_mse
+                self.best_r2 = r2 if r2>self.best_r2 else self.best_r2
 
                 score = r2/(mae+mse)
 
-                if score>best_score:
-                    best_score = score
+                if score>self.best_score:
+                    self.best_score = score
 
                 # self._checkpoint.save(file_prefix = self._checkpoint_prefix)
                 ## 使用保存的模型对test数据进行验证
@@ -283,27 +337,178 @@ class GANCCP:
         #     f.write(summary+'\n')
         #     logging.info('Final performace on test is {}.'.format(summary))
 
-        def pretrain_dis():
+    def train_discriminator(self,pretrain=False):
 
-            EPOCHS = 10
+        ##十分耗时
+        all_data,valid_data,test_data = self.gen_data_from_generator()
 
-            ## 使用pretrain的generator生成fake data
-            prdicted_Ys = []
+        # print('Discriminator ...')
+        if pretrain:
+            tag = 'PRETRAIN'
+
+            n_pretrain_epoches = self._n_pre_discriminator_epoches
+
+
+        else:
+            tag = 'TRAIN'
+
+            n_pretrain_epoches = self._n_discriminator_epoches
+
+        for epoch in range(n_pretrain_epoches):
+
+            start = time.time()
+
+            epoch+=1
+            total_loss = 0
+            for batch,(dynamic_X,static_X,real_Y,fake_Y) in enumerate(all_data):
+
+                total_loss+=self.train_discriminator_step(dynamic_X,static_X,real_Y,fake_Y,pretrain=pretrain)
+
+                if (batch+1)%50==0 or (batch+1)==self._n_batchs:
+
+                    print('{}-discriminator,data:sip-m{}n{},model:{},epoch {},batch:{}/{},total average loss:{:.3f}.'.format(tag,self._m,self._n,self._model_name,epoch,batch+1,self._n_batchs,total_loss/(batch+1)))
             
-            ## 使用pretrain的generator进行fake data的生成       
-            for (batch,(dynamic_features,static_features,targ)) in enumerate(self._dataset.take(self._n_batchs)):
-                # self.gen_predict(dynamic_features,static_features,targ)
+            ##在validation上进行验证
+            acc = self.evaluate_discriminator(valid_data)
+            print('{}-discriminator data:sip-m{}n{},model:{},epoch {},total average loss:{:.3f},precision on validation:{:.3f},{:.3f},{:.3f}.'.format(tag,self._m,self._n,self._model_name,epoch,total_loss/(batch+1),acc[0],acc[1],acc[2]))
 
-                all_predictions = self._generator(dynamic_X,static_X,predict=True)
+            print('Time taken for 1 epoch {} sec\n'.format(time.time()-start))
 
-                predicted_Ys.append(all_predictions)
+    def gen_data_from_generator(self):
 
-            predicted_Ys = tf.concat(predicted_Ys,axis=0)
+        ## 生成数据使用保存时候最好的数据
+        print('generate fake data from generator ....')
 
-            ## 将fake data和real data进行融合
-            
+        train_data = []
+        ## 使用pretrain的generator进行fake data的生成    
+        ## 为了解决vanishing gradients的问题，
+        ## 我们将training data里面10%的数据正负颠倒，作为错误噪音
+        ## https://medium.com/@jonathan_hui/gan-what-is-wrong-with-the-gan-cost-function-6f594162ce01
+
+        for (batch,(dynamic_X,static_X,real_Y)) in enumerate(self._dataset.take(self._n_batchs)):
+
+            ## generator产生fake out
+            fake_Y = self._generator(dynamic_X,static_X,predict=False)
+
+            # print('shape of Y:{}'.format(fake_Y.shape))
+
+            fake_Y = tf.reshape(fake_Y,(fake_Y.shape[0],fake_Y.shape[1]))
+
+            rn = np.random.random()
+
+            ## 加入10%的噪声
+            if rn<0:
+                batch_data = (dynamic_X,static_X,fake_Y,real_Y)
+            else:
+                batch_data = (dynamic_X,static_X,real_Y,fake_Y)
+
+            train_data.append(batch_data)
+
+        valid_fake_Y = self._generator(self._valid_dynamic_X,self._valid_static_X,predict=False)
+
+        valid_fake_Y = tf.reshape(valid_fake_Y,(valid_fake_Y.shape[0],valid_fake_Y.shape[1]))
+
+        valid_data = [self._valid_dynamic_X,self._valid_static_X,self._valid_Y,valid_fake_Y]
+
+        test_fake_Y = self._generator(self._test_dynamic_X,self._test_static_X,predict=False)
+
+        test_fake_Y = tf.reshape(test_fake_Y,(test_fake_Y.shape[0],test_fake_Y.shape[1]))
+
+        test_data = [self._test_dynamic_X,self._test_static_X,self._test_Y,test_fake_Y]
+
+        print('data generated done.')
+
+        return train_data,valid_data,test_data
+
+    ## generator pretraining
+    def train_gen_step(self,dynamic_X,static_X,targ,pretrain=False):
+
+        with tf.GradientTape() as tape:
+            predictions = self._generator(dynamic_X,static_X)
+
+            if pretrain:
+                loss = loss_function(tf.expand_dims(targ,2),predictions)
+            else:
+                ## 如果不是预训练，loss的目标是尽量使discriminator出错
+                fake_Y = tf.reshape(predictions,(predictions.shape[0],predictions.shape[1]))
+                # print(')
+                fake_output = self._discriminator(dynamic_X,static_X,fake_Y)
+
+                ## 为了保证梯度不下降,使用两种loss进行混淆
+                loss = generator_loss(fake_output,self._mode)
+
+                ## 为了保证方向的正确性使用mse作为loss
+                if self._mode=='GAN':
+                    loss += loss_function(tf.expand_dims(targ,2),predictions)
+                
+
+            variables = self._generator.trainable_variables
+
+            gradients =  tape.gradient(loss,variables)
+
+            if pretrain:
+                self._gen_pre_optimizer.apply_gradients(zip(gradients,variables))
+            else:
+                self._gen_optimizer.apply_gradients(zip(gradients,variables))
+
+        return loss
 
 
+    
+    def train_discriminator_step(self,dynamic_X,static_X,real_Y,fake_Y,pretrain=False):
+
+        ##获得所有数据之后进行训练
+        with tf.GradientTape() as tape:
+
+            ## 使用discriminator进行预测
+            fake_output = self._discriminator(dynamic_X,static_X,fake_Y)
+
+            real_output = self._discriminator(dynamic_X,static_X,real_Y)
+
+            dis_loss = discriminator_loss(real_output,fake_output,self._mode)
+
+            if self._mode=='WGAN-GP':
+
+                ##加上GP
+                dis_loss += self._penalty_weight*self.gradient_penalty(dynamic_X,static_X,real_Y,fake_Y)
+
+        gradients = tape.gradient(dis_loss,self._discriminator.trainable_variables)
+
+
+        if pretrain:
+
+            self._dis_pre_optimizer.apply_gradients(zip(gradients,self._discriminator.trainable_variables))
+
+        else:
+
+            self._dis_optimizer.apply_gradients(zip(gradients,self._discriminator.trainable_variables))
+
+        if self._mode=='WGAN':
+
+            [p.assign(tf.clip_by_value(p,-0.01,0.01)) for p in self._discriminator.trainable_variables]
+
+        return dis_loss
+
+    def gradient_penalty(self,dynamic_X,static_X, real, fake):
+        ## 这个shape不是real的shape，而是多少维度
+        shape = [real.shape[0]]+[1]*(len(real.shape)-1)
+        # print(shape)
+        alpha = tf.random.uniform(shape=shape, minval=0., maxval=1.,dtype=tf.float64)
+        inter = real + alpha * (fake - real)
+
+        with tf.GradientTape() as t:
+            t.watch(inter)
+            pred = self._discriminator(dynamic_X,static_X,inter)
+
+            grad = t.gradient(pred, inter)
+            norm = tf.norm(grad, axis=1)
+            gp = tf.reduce_mean((norm - 1.)**2)
+
+        # print(gp)
+
+        return gp
+
+    
     def save_losses(self,loss_obj,model):
         self._pathObj.save_json(self._pathObj.losses_file(self._m,self._n,model),loss_obj)
 
@@ -330,6 +535,47 @@ class GANCCP:
         r2 = float('{:.3f}'.format(r2))
 
         return r2,mae,mse,all_predictions
+
+    ## precision
+    def evaluate_discriminator(self,data):
+        dynamic_X,static_X,real_Y,fake_Y = data
+
+        fake_output = self._discriminator(dynamic_X,static_X,fake_Y,predict=True)
+
+        real_output = self._discriminator(dynamic_X,static_X,real_Y,predict=True)
+
+        real = tf.concat([tf.zeros_like(fake_output),tf.ones_like(real_output)],axis=0)
+        pred = tf.concat([fake_output,real_output],axis=0)
+
+        # print(real.shape)
+
+        # print(real[:10])
+        # print(pred[:10])
+        # print(pred.shape)
+
+        # acc = self.accuracy(real,pred)
+
+        acc1 = self.accuracy(tf.zeros_like(fake_output),fake_output)
+
+        acc2 = self.accuracy(tf.ones_like(real_output),real_output)
+
+        acc3 = self.accuracy(real,pred)
+
+
+        # print(acc)
+
+        return acc1,acc2,acc3
+
+
+    def accuracy(self,real,pred):
+
+        m = tf.keras.metrics.BinaryAccuracy()
+
+        m.update_state(real,pred)
+
+        return m.result().numpy()
+
+
         
 
 if __name__ == '__main__':
@@ -339,8 +585,8 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    # mn_list=[(5,10),(3,10),(5,1),(5,5),(3,5),(5,3),(3,3),(3,1)]
-    mn_list=[(5,10),(5,5),(5,3)]
+    mn_list=[(5,10),(3,10),(5,1),(5,5),(3,5),(5,3),(3,3),(3,1)]
+    # mn_list=[(5,10)]
 
 
     for m,n in mn_list:
@@ -348,5 +594,7 @@ if __name__ == '__main__':
         ganccp = GANCCP(pathObj,m,n)
         # s2sm.train()
 
-        ganccp.pretrain_generator()
+        ganccp.alternative_training()
+
+
 

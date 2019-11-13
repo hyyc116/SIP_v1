@@ -17,7 +17,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 
 ## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_datasets(pathObj,m,n):
+def construct_datasets(pathObj,m,n,scale=True):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
     validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
@@ -76,23 +76,31 @@ def construct_datasets(pathObj,m,n):
             train_Y.append(Y)
 
     logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_X),len(test_X),len(valid_X)))
-
-    train_X,test_X,valid_X = scale_dataset(train_X,test_X,valid_X)
-    train_Y,test_Y,valid_Y = scale_dataset(train_Y,test_Y,valid_Y)
+    
+    train_X,test_X,valid_X,train_X_mean,train_X_std = scale_dataset(train_X,test_X,valid_X,scale)
+    train_Y,test_Y,valid_Y,train_Y_mean,train_Y_std = scale_dataset(train_Y,test_Y,valid_Y,scale)
 
     return train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids
 
 
-def scale_dataset(train,test,valid):
+def scale_dataset(train,test,valid,scale=True):
 
     train = np.array(train)
     test = np.array(test)
     valid = np.array(valid)
 
-    logging.info('as array done. shape of array is {}'.format(train.shape))
-    mean = np.mean(train,axis=0)
-    std = np.std(train,axis=0)
-    return (train-mean)/std,(test-mean)/std,(valid-mean)/std
+    if scale:
+
+        logging.info('as array done. shape of array is {}'.format(train.shape))
+        mean = np.mean(train,axis=0)
+        std = np.std(train,axis=0)
+
+    else:
+
+        mean = 0
+        std = 1
+
+    return (train-mean)/std,(test-mean)/std,(valid-mean)/std,mean,std
     # return train,test,valid
 
 def unscale_dataset(train,result):
@@ -174,7 +182,7 @@ def evaluate_model(models,test_X,test_Y):
     return r2_score(test_Y, predict_Y, multioutput='variance_weighted'),mean_absolute_error(test_Y, predict_Y),mean_squared_error(test_Y, predict_Y),predict_Y
 
 
-def train_and_evaluate(pathObj,mn_list):
+def train_and_evaluate(pathObj,mn_list,scale=False):
 
     ## m n list
     lines = ['dataset,model,r2,mae,mse']
@@ -182,7 +190,7 @@ def train_and_evaluate(pathObj,mn_list):
     for m,n in mn_list:
         dataset = 'sip-m{}n{}'.format(m,n)
         logging.info('train dataset sip-m{}n{} ..'.format(m,n))
-        train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids = construct_datasets(pathObj,m,n)
+        train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids = construct_datasets(pathObj,m,n,scale=scale)
         
         shallow_result[dataset]['IDS'] = test_sorted_ids
 
@@ -214,10 +222,31 @@ def train_and_evaluate(pathObj,mn_list):
 
     logging.info('result saved.')
 
+## 查看一下全部预测为0的效果
+def test_zero(pathObj,m,n):
+
+    train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids = construct_datasets(pathObj,m,n,False)
+
+
+
+    test_Y = np.array(test_Y)
+
+    fake_Y = np.zeros((test_Y.shape[0],test_Y.shape[1]))
+
+    train,test,fake = scale_dataset(train_Y,test_Y,fake_Y)
+
+
+    print(m,n)
+
+    print('r2',r2_score(test,fake))
+    print('mae',mean_absolute_error(test,fake))
+
+    print('mse',mean_squared_error(test,fake))
+
+
 
 
 if __name__ == '__main__':
-    
     
 
     field = 'computer science'
@@ -228,6 +257,12 @@ if __name__ == '__main__':
     mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10)]
 
     train_and_evaluate(pathObj,mn_list)
+
+    # for m,n in mn_list:
+        # test_zero(pathObj,m,n)
+
+
+
 
 
 
