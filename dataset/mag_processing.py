@@ -195,6 +195,14 @@ def plot_citation_distribution(pathObj):
     xs = []
     ys = []
 
+    ## 根据文章的论文被引次数，来获取分界值
+    cits_list = sorted(pid_citnum.values(),reverse=True)
+    total = float(len(cits_list))
+    ps = [0.01,0.05,0.1,0.2,0.4,0.7]
+
+    for p in ps:
+        print('p:',p,',cit:',cits_list[int(total*p)])
+
     citnum_counter = Counter(pid_citnum.values())
     for num in sorted(citnum_counter.keys()):
 
@@ -578,11 +586,11 @@ if __name__ == '__main__':
 
     # red_ref_relations(pathObj,2016)
 
-    # plot_citation_distribution(pathObj)
+    plot_citation_distribution(pathObj)
 
     # read_paper_authors(pathObj)
 
-    hindex_of_au_ins(pathObj)
+    # hindex_of_au_ins(pathObj)
     # venue_if(pathObj)
 
     logging.info('done')

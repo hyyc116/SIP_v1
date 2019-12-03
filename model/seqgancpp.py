@@ -19,39 +19,38 @@ from sklearn.metrics import mean_squared_error
 from shallow_regression_model import scale_dataset
 
 tf.keras.backend.set_floatx('float64')
-from ED_model import construct_datasets
+
 from ED_model import gru
 from ED_model import Encoder
 from ED_model import  loss_function
 
-from ED_model_att import BahdanauAttention
-from ED_model_att import DecoderAtt
+from ED_model_att import Decoder
 
 from ED_model_att import is_better_result
 from functools import partial
 from losses import *
 
+from dataset.datasets_construction import construct_RNN_cat_datasets
+
+
 ## Generator
 class Generator(tf.keras.Model):
     """docstring for Generator"""
-    def __init__(self, units, batch_sz, len_targ):
+    def __init__(self, units, len_targ):
         super(Generator, self).__init__()
         self._units = units
 
-        self._batch_sz = batch_sz
-
         self._len_targ = len_targ
 
-        self._encoder = Encoder(self._units,self._batch_sz)
-
-        self._decoder = DecoderAtt(self._units,self._batch_sz)
+        self._encoder = Encoder(self._units)
+        ## 不使用attention的decoder
+        self._decoder = Decoder(self._units)
 
     def call(self,dynamic_features,static_features,predict=False):
 
         # Encoder
         # enc_hidden = self._encoder.initialize_hidden_state()
         initial_state = tf.zeros((dynamic_features.shape[0],self._units),tf.float64)
-
         enc_output, enc_hidden = self._encoder(dynamic_features,initial_state,predict=predict)
 
         ## decoder
@@ -67,7 +66,6 @@ class Generator(tf.keras.Model):
             dec_input = predictions
 
         final_result = tf.concat(all_predictions,1)
-        # print('shape:{}'.format(final_result.shape))
 
         return final_result
 
@@ -75,11 +73,10 @@ class Generator(tf.keras.Model):
 ## Discriminator对论文的进行encode,然后和预测结果一起进行二类分类
 class Discriminator(tf.keras.Model):
     """docstring for Discriminator"""
-    def __init__(self, units,batch_sz):
+    def __init__(self, units):
         super(Discriminator, self).__init__(name='discriminator_abc')
 
         self._units = units
-        self._batch_sz = batch_sz
         
         ## encoder对输入进行加权
         self._X_encoder = Encoder(self._units)
@@ -97,7 +94,7 @@ class Discriminator(tf.keras.Model):
 
         # self._fc_dropout = tf.keras.layers.Dropout(rate=0.5)
 
-        self._fc2 = tf.keras.layers.Dense(1)
+        self._fc2 = tf.keras.layers.Dense(2)
 
     def call(self,dynamic_features,static_features,Y,predict=False):
 
@@ -140,9 +137,12 @@ class GANCCP:
     def __init__(self,pathObj,m,n):
         ## 加载数据
 
-        scale=True
-        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,self._valid_Y,self._test_sorted_ids = construct_datasets(pathObj,m,n,scale)
-
+        scale = False
+        ## 加载数据
+        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,\
+        self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,\
+        self._valid_Y,self._test_sorted_ids,self._dx_mean,self._dx_std,\
+        self._sx_mean,self._sx_std,self._y_mean,self._y_std = construct_RNN_cat_datasets(pathObj,m,n,scale)
         ## 构建预训练数据
 
         print('train model on dataset sip-m{}n{}.'.format(m,n))

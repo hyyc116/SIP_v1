@@ -15,103 +15,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 
-
-## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_datasets(pathObj,m,n,scale=True):
-
-    testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
-    validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
-
-    pid_features = pathObj.loads_json(pathObj.dataset_feature_path(m,n))
-
-    ## 抽取特征
-    train_X = []
-    train_Y = []
-
-    test_X = []
-    test_Y = []
-
-    valid_X = []
-    valid_Y = []
-
-    test_sorted_ids = []
-
-    for pid in pid_features.keys():
-
-        ## 将所有的特征串联起来
-        feature = pid_features[pid]
-
-        X=[]
-        Y=[float(y) for y in feature['Y']]
-
-        ##文章被引用的历史
-        X.extend(feature['hist_cits'])
-        ## 作者hindex
-        X.extend(feature['a-first-hix'])
-        X.extend(feature['a-avg-hix'])
-        ## 作者文章数量
-        X.extend(feature['a-first-pnum'])
-        X.extend(feature['a-avg-pnum'])
-        ## 作者数量
-        X.append(feature['a-num'])
-        X.append(feature['a-career-length'])
-        ## 机构影响力 
-        X.extend(feature['i-avg-if'])
-        ## 期刊影响力
-        X.extend(feature['v-if'])
-        ## 背景
-        X.extend(feature['b-num'])
-
-        X = [float(x) for x in X]
-
-        if pid in testing_ids:
-            test_sorted_ids.append(pid)
-            test_X.append(X)
-            test_Y.append(Y)
-        elif pid in validing_ids:
-            valid_X.append(X)
-            valid_Y.append(Y)
-        else:
-            train_X.append(X)
-            train_Y.append(Y)
-
-    logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_X),len(test_X),len(valid_X)))
-    
-    train_X,test_X,valid_X,train_X_mean,train_X_std = scale_dataset(train_X,test_X,valid_X,scale)
-    train_Y,test_Y,valid_Y,train_Y_mean,train_Y_std = scale_dataset(train_Y,test_Y,valid_Y,scale)
-
-    return train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids
-
-
-def scale_dataset(train,test,valid,scale=True):
-
-    train = np.array(train)
-    test = np.array(test)
-    valid = np.array(valid)
-
-    if scale:
-
-        logging.info('as array done. shape of array is {}'.format(train.shape))
-        mean = np.mean(train,axis=0)
-        std = np.std(train,axis=0)
-
-    else:
-
-        mean = 0
-        std = 1
-
-    return (train-mean)/std,(test-mean)/std,(valid-mean)/std,mean,std
-    # return train,test,valid
-
-def unscale_dataset(train,result):
-
-    train = np.array(train)
-
-    mean = np.mean(train,axis=0)
-    std = np.std(train,axis = 0)
-
-    return result*std+mean
-
+from dataset.datasets_construction import construct_shallow_datasets as construct_datasets
 
 ## 训练模型
 def train_Linear(train_X,train_Y):
@@ -242,7 +146,6 @@ def test_zero(pathObj,m,n):
     print('mae',mean_absolute_error(test,fake))
 
     print('mse',mean_squared_error(test,fake))
-
 
 
 

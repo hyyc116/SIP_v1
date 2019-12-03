@@ -53,11 +53,11 @@ class BahdanauAttention(tf.keras.Model):
         return context_vector,attention_weights
 
 
-class DecoderAtt(tf.keras.Model):
+class Decoder(tf.keras.Model):
 
     def __init__(self,dec_units,batch_sz):
 
-        super(DecoderAtt,self).__init__()
+        super(Decoder,self).__init__()
 
         self._batch_sz = batch_sz
 
@@ -144,7 +144,7 @@ class S2SM:
 
         ## 初始化encoder以及decoder
         self._encoder = Encoder(self._units,self._batch_sz)
-        self._decoder = DecoderAtt(self._units,self._batch_sz)
+        self._decoder = Decoder(self._units,self._batch_sz)
         self._model_name = 'ED_ATT_model'
 
         ## optimizer
