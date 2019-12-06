@@ -35,17 +35,12 @@ def construct_datasets(pathObj,mn_list):
 
 ## 统一所有数据集的测试集以及验证集，从sip-m5n10中随机抽取1000篇作为验证集，10000篇作为测试集。
 def get_test_valid_set_ids(pathObj):
-    pid_features = json.loads(open(pathObj.dataset_feature_path(5,10)).read())
+    pid_features = json.loads(open(pathObj.dataset_feature_path(3,10)).read())
 
     pids = list(pid_features.keys())
 
-    print(len(pids)*0.6)
-
-    test_percent = 0.4
-
-    test_vs_valid = 3
-
-    test_num = int(len(pids)*test_percent)
+    # test_percent = 0.4
+    test_num = 30000
     valid_num = int(test_num/3)
 
     ## 选择11000个作为测试验证机和
@@ -124,17 +119,13 @@ def construct_RNN_datasets(pathObj,m,n,scale=True):
             train_static_X.append(static_X)
             train_Y.append(Y)
 
-
     logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_Y),len(test_Y),len(valid_Y)))
 
-    # print(train_Y[:64])
     train_dynamic_X,test_dynamic_X,valid_dynamic_X,dx_mean,dx_std = scale_dataset(train_dynamic_X,test_dynamic_X,valid_dynamic_X,True)
 
     train_static_X,test_static_X,valid_static_X,sx_mean,sx_std = scale_dataset(train_static_X,test_static_X,valid_static_X,True)
 
     train_Y,test_Y,valid_Y,y_mean,y_std = scale_dataset(train_Y,test_Y,valid_Y,scale)
-
-    logging.info('scale done')
 
     return train_dynamic_X,train_static_X,train_Y,\
             test_dynamic_X,test_static_X,test_Y,\
@@ -144,6 +135,22 @@ def construct_RNN_datasets(pathObj,m,n,scale=True):
 
 
 
+def num_tolabel(num):
+
+    if num>=139:
+        return 0
+    elif num >=47:
+        return 1
+    elif num >=26:
+        return 2
+    elif num >=13:
+        return 3
+    elif num >=5:
+        return 4
+    else:
+        return 5
+
+
 def construct_RNN_cat_datasets(pathObj,m,n,scale=False):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
@@ -151,31 +158,26 @@ def construct_RNN_cat_datasets(pathObj,m,n,scale=False):
 
     pid_features = pathObj.loads_json(pathObj.dataset_feature_path(m,n))
 
+    L_dis = defaultdict(int)
+
     ## 抽取特征
     train_dynamic_X = []
     train_static_X = []
     train_Y = []
-    train_ins_Y = []
-    train_last_Y = []
+    train_L = []
 
     test_dynamic_X = []
     test_static_X = []
     test_Y = []
-    test_ins_Y = []
-    test_last_Y = []
+    test_L = []
+
 
     valid_dynamic_X = []
     valid_static_X = []
     valid_Y = []
-    valid_ins_Y = []
-    valid_last_Y = []
-
-    y_id = {}
-    id_y = {}
+    valid_L = []
 
     test_sorted_ids = []
-
-    y_dis = defaultdict(int)
 
     for pid in pid_features.keys():
 
@@ -184,29 +186,11 @@ def construct_RNN_cat_datasets(pathObj,m,n,scale=False):
 
         dynamic_X = []
         static_X = []
-        last_y = int(feature['hist_cits'][-1])
         Y=[int(y) for y in feature['Y']]
-        ins_Y = []
-        _last_y = last_y
-        for y in feature['Y']:
-            increase_Y = y-last_y
 
-            if increase_Y<-100:
-                increase_Y = -100
+        L = num_tolabel(np.sum(feature['hist_cits'])+np.sum(Y))
 
-            if increase_Y>200:
-                increase_Y = 200
-
-            y_dis[increase_Y]+=1
-
-            _id = y_id.get(increase_Y,len(y_id))
-
-            y_id[increase_Y] =  _id
-            id_y[_id] = increase_Y
-
-
-            ins_Y.append(_id)
-            # _last_y = y
+        L_dis[L]+=1
 
 
         dynamic_X.append([float(f) for f in feature['hist_cits']])
@@ -231,22 +215,22 @@ def construct_RNN_cat_datasets(pathObj,m,n,scale=False):
             test_dynamic_X.append(list(zip(*dynamic_X)))
             test_static_X.append(static_X)
             test_Y.append(Y)
-            test_ins_Y.append(ins_Y)
-            test_last_Y.append(last_y)
+            test_L.append(L)
+            
         elif pid in validing_ids:
             valid_dynamic_X.append(list(zip(*dynamic_X)))
             valid_static_X.append(static_X)
             valid_Y.append(Y)
-            valid_last_Y.append(last_y)
-            valid_ins_Y.append(ins_Y)
+            valid_L.append(L)
 
         else:
             train_dynamic_X.append(list(zip(*dynamic_X)))
             train_static_X.append(static_X)
             train_Y.append(Y)
-            train_ins_Y.append(ins_Y)
-            train_last_Y.append(last_y)
+            train_L.append(L)
 
+
+    plot_ydis(L_dis,m,n)
 
     logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_Y),len(test_Y),len(valid_Y)))
 
@@ -260,20 +244,15 @@ def construct_RNN_cat_datasets(pathObj,m,n,scale=False):
     logging.info('scale done')
 
 
-    ## y_dis的分布
-    plot_ydis(y_dis)
-
-
     return train_dynamic_X,train_static_X,train_Y,\
             test_dynamic_X,test_static_X,test_Y,\
             valid_dynamic_X,valid_static_X,valid_Y,\
             test_sorted_ids,dx_mean,dx_std,\
             sx_mean,sx_std,y_mean,y_std,\
-            train_ins_Y,test_ins_Y,valid_ins_Y,\
-            y_id,id_y,train_last_Y,test_last_Y,valid_last_Y
+            train_L,test_L,valid_L
 
 
-def plot_ydis(y_dis):
+def plot_ydis(y_dis,m,n):
 
 
     xs = []
@@ -284,7 +263,7 @@ def plot_ydis(y_dis):
 
     plt.figure(figsize=(5,4))
 
-    plt.plot(xs,np.array(ys)/float(np.sum(ys)))
+    plt.plot(xs,np.array(ys))
 
 
     plt.xlabel('y increase')
@@ -293,10 +272,10 @@ def plot_ydis(y_dis):
 
     plt.tight_layout()
 
-    plt.savefig('data/y_dis.png',dpi=300)
+    plt.savefig('data/y_dis_{}_{}.png'.format(m,n),dpi=300)
 
 ## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_shallow_datasets(pathObj,m,n,scale=True):
+def construct_shallow_datasets(pathObj,m,n,scale=True,basic_feature=False):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
     validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
@@ -306,12 +285,15 @@ def construct_shallow_datasets(pathObj,m,n,scale=True):
     ## 抽取特征
     train_X = []
     train_Y = []
+    train_L = []
 
     test_X = []
     test_Y = []
+    test_L = []
 
     valid_X = []
     valid_Y = []
+    valid_L = []
 
     test_sorted_ids = []
 
@@ -323,43 +305,53 @@ def construct_shallow_datasets(pathObj,m,n,scale=True):
         X=[]
         Y=[float(y) for y in feature['Y']]
 
+        L = num_tolabel(np.sum(Y)+np.sum(feature['hist_cits']))
+
         ##文章被引用的历史
         X.extend(feature['hist_cits'])
-        ## 作者hindex
-        X.extend(feature['a-first-hix'])
-        X.extend(feature['a-avg-hix'])
-        ## 作者文章数量
-        X.extend(feature['a-first-pnum'])
-        X.extend(feature['a-avg-pnum'])
-        ## 作者数量
-        X.append(feature['a-num'])
-        X.append(feature['a-career-length'])
-        ## 机构影响力 
-        X.extend(feature['i-avg-if'])
-        ## 期刊影响力
-        X.extend(feature['v-if'])
-        ## 背景
-        X.extend(feature['b-num'])
+        if not basic_feature:
+            ## 作者hindex
+            X.extend(feature['a-first-hix'])
+            X.extend(feature['a-avg-hix'])
+            ## 作者文章数量
+            X.extend(feature['a-first-pnum'])
+            X.extend(feature['a-avg-pnum'])
+            ## 作者数量
+            X.append(feature['a-num'])
+            X.append(feature['a-career-length'])
+            ## 机构影响力 
+            X.extend(feature['i-avg-if'])
+            ## 期刊影响力
+            X.extend(feature['v-if'])
+            ## 背景
+            X.extend(feature['b-num'])
 
         X = [float(x) for x in X]
+
 
         if pid in testing_ids:
             test_sorted_ids.append(pid)
             test_X.append(X)
             test_Y.append(Y)
+            test_L.append(L)
         elif pid in validing_ids:
             valid_X.append(X)
             valid_Y.append(Y)
+            valid_L.append(L)
         else:
             train_X.append(X)
             train_Y.append(Y)
+            train_L.append(L)
+
+    print('length of feaatures {},std of test Y {}.'.format(len(X),np.std(test_Y)))
+
 
     logging.info('{} of training dataset, {} of testing dataset, {} of valid dataset.'.format(len(train_X),len(test_X),len(valid_X)))
     
     train_X,test_X,valid_X,train_X_mean,train_X_std = scale_dataset(train_X,test_X,valid_X,scale)
     train_Y,test_Y,valid_Y,train_Y_mean,train_Y_std = scale_dataset(train_Y,test_Y,valid_Y,scale)
 
-    return train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids
+    return train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids,train_L,test_L,valid_L
 
 
 def scale_dataset(train,test,valid,scale=True):
@@ -408,7 +400,7 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10)]
+    mn_list=[(3,1),(3,3),(3,5),(3,10)]
 
     # construct_datasets(pathObj,mn_list)
 

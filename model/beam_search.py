@@ -110,19 +110,19 @@ def beam_search(decoder,dec_input,dec_state, static_features,vocab_size, beam_wi
 
     return tokens,logits,last_costs
 
-def greedy_search(decoder,dec_input,dec_state, static_features,length):
+def greedy_search(decoder,dec_input,dec_state, static_features,length,predict):
 
     all_predictions = []
     logits = []
     for _ in range(length):
 
-        predictions,dec_state = decoder(dec_input,dec_state,static_features)
+        predictions,dec_state = decoder(dec_input,dec_state,static_features,predict)
 
-        dec_input = tf.argmax(predictions)
+        dec_input = tf.argmax(predictions,axis=1)
 
         all_predictions.append(tf.expand_dims(dec_input,1))
 
-        logits.append(tf.softmax(predictions))
+        logits.append(predictions)
 
     return tf.concat(all_predictions,axis=1),tf.concat(logits,axis=1)
 

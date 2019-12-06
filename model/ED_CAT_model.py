@@ -20,7 +20,7 @@ tf.keras.backend.set_floatx('float64')
 from dataset.datasets_construction import construct_RNN_cat_datasets
 from dataset.datasets_construction import unscale_dataset
 from ED_model import Encoder
-from beam_search import beam_search
+from beam_search import greedy_search
 
 
 def gru(units):

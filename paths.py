@@ -74,8 +74,14 @@ class PATH:
         ''' 结果文件'''
         self._shallow_result_summary = 'result/shallow_result_summary_{}.csv'.format(self._field_tag)
         self._deep_result_summary = 'result/deep_result_summary_{}.csv'.format(self._field_tag)
+
+        self._shallow_result_clc_summary = 'result/shallow_result_summary_clc_{}.csv'.format(self._field_tag)
+        self._deep_result_clc_summary = 'result/deep_result_summary_clc_{}.csv'.format(self._field_tag)
         ## 预测id对应的结果
         self._shallow_testing_prediction_result = 'result/shallow_prediction_result_{}.json'.format(self._field_tag)
+
+        self._shallow_testing_prediction_result_clc = 'result/shallow_prediction_result_clc_{}.json'.format(self._field_tag)
+
 
 
     def deep_result_prediction_path(self,model,m,n):

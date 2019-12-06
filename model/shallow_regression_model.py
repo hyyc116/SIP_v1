@@ -86,7 +86,7 @@ def evaluate_model(models,test_X,test_Y):
     return r2_score(test_Y, predict_Y, multioutput='variance_weighted'),mean_absolute_error(test_Y, predict_Y),mean_squared_error(test_Y, predict_Y),predict_Y
 
 
-def train_and_evaluate(pathObj,mn_list,scale=False):
+def train_and_evaluate(pathObj,mn_list,scale=False,basic_feature=True):
 
     ## m n list
     lines = ['dataset,model,r2,mae,mse']
@@ -94,7 +94,7 @@ def train_and_evaluate(pathObj,mn_list,scale=False):
     for m,n in mn_list:
         dataset = 'sip-m{}n{}'.format(m,n)
         logging.info('train dataset sip-m{}n{} ..'.format(m,n))
-        train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids = construct_datasets(pathObj,m,n,scale=scale)
+        train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids,_,_,_ = construct_datasets(pathObj,m,n,scale=scale,basic_feature=basic_feature)
         
         shallow_result[dataset]['IDS'] = test_sorted_ids
 
@@ -118,11 +118,11 @@ def train_and_evaluate(pathObj,mn_list,scale=False):
 
         print('Linear====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
 
-    open(pathObj._shallow_result_summary,'w').write('\n'.join(lines))
+    open(pathObj._shallow_result_summary,'a').write('\n'.join(lines))
 
     logging.info('result summary saved.')
 
-    open(pathObj._shallow_testing_prediction_result,'w').write(json.dumps(shallow_result))
+    open(pathObj._shallow_testing_prediction_result,'a').write(json.dumps(shallow_result))
 
     logging.info('result saved.')
 
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10)]
+    mn_list=[(3,1),(3,3),(3,5),(3,10)]
 
     train_and_evaluate(pathObj,mn_list)
 
