@@ -26,6 +26,29 @@ AND schemaname != 'information_schema';
  mag_core   | paper_references                     |
  mag_core   | fields_of_study_children             |
 
+------------------------------------
+field,id,level=0
+ (Art,142362112)
+ (Biology,86803240)
+ (Business,144133560)
+ (Chemistry,185592680)
+ ("Computer science",41008148)
+ (Economics,162324750)
+ (Engineering,127413603)
+ ("Environmental science",39432304)
+ (Geography,205649164)
+ (Geology,127313418)
+ (History,95457728)
+ ("Materials science",192562407)
+ (Mathematics,33923547)
+ (Medicine,71924100)
+ (Philosophy,138885662)
+ (Physics,121332964)
+ ("Political science",17744445)
+ (Psychology,15744967)
+ (Sociology,144024400)
+
+
 '''
 import sys
 sys.path.extend(['..','.'])
@@ -38,7 +61,7 @@ def read_paper_ids(pathObj):
 
     query_op = dbop()
 
-    sql = "select mag_core.paper_fields_of_study.paper_id from mag_core.paper_fields_of_study, mag_core.fields_of_study,mag_core.paper_languages where mag_core.paper_fields_of_study.field_of_study_id = mag_core.fields_of_study.field_of_study_id and mag_core.paper_fields_of_study.paper_id = mag_core.paper_languages.paper_id and mag_core.paper_languages.language_code='en' and mag_core.fields_of_study.normalized_name='{:}'".format(field)
+    sql = "select mag_core.paper_fields_of_study.paper_id from mag_core.paper_fields_of_study, mag_core.fields_of_study where mag_core.paper_fields_of_study.field_of_study_id = mag_core.fields_of_study.field_of_study_id and mag_core.fields_of_study.field_of_study_id='41008148' "
     progress = 0
 
     paper_ids = []
@@ -577,21 +600,21 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    # read_paper_ids(pathObj)
+    read_paper_ids(pathObj)
 
-    # read_paper_venue(pathObj)
+    read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
-    # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
+    plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
 
-    # red_ref_relations(pathObj,2016)
+    red_ref_relations(pathObj,2016)
 
     plot_citation_distribution(pathObj)
 
-    # read_paper_authors(pathObj)
+    read_paper_authors(pathObj)
 
-    # hindex_of_au_ins(pathObj)
-    # venue_if(pathObj)
+    hindex_of_au_ins(pathObj)
+    venue_if(pathObj)
 
     logging.info('done')
 

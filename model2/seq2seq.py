@@ -95,7 +95,7 @@ class S2SM:
         print('train model on dataset sip-m{}n{} - {} features with model {}.'.format(m,n,feature_set,self._model_name))
 
         ## optimizer
-        self._optimizer = tf.keras.optimizers.Adam(learning_rate=5e-4)
+        self._optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5,beta_2=0.9)
 
         ## 模型的保存位置
         self._checkpoint_dir = './trainning_checkpoints_{}_{}_{}'.format(self._model_name, m,n)
