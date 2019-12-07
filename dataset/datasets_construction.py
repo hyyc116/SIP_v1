@@ -10,27 +10,7 @@ from paths import PATH
 
 '''
 
-### 每一个数据集的文章ID至少比2016年早m+n年发表
-def construct_datasets(pathObj,mn_list):
 
-    logging.info('Loading data ...')
-    reserved_pids = [line.strip() for line in open(pathObj._reserved_papers_path)]
-
-    logging.info('{} selected paper ids loaded, start to load paper year dict ...'.format(len(reserved_pids)))
-
-    paper_year = json.loads(open(pathObj._field_paper_year_path).read())
-
-    logging.info('paper year dict loaded.')
-
-    for m,n in mn_list:
-
-        mn_pids = [pid for pid in reserved_pids if (2016-int(paper_year[pid]))>=(m+n)]
-
-        open(pathObj.dataset_id_path(m,n),'w').write('\n'.join(mn_pids))
-
-        logging.info('{} papers in dataset sip-m{}n{}.'.format(len(mn_pids),m,n))
-
-    logging.info('Done')
 
 
 ## 统一所有数据集的测试集以及验证集，从sip-m5n10中随机抽取1000篇作为验证集，10000篇作为测试集。
