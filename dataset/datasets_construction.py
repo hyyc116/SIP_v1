@@ -10,9 +10,6 @@ from paths import PATH
 
 '''
 
-
-
-
 ## 统一所有数据集的测试集以及验证集，从sip-m5n10中随机抽取1000篇作为验证集，10000篇作为测试集。
 def get_test_valid_set_ids(pathObj):
     pid_features = json.loads(open(pathObj.dataset_feature_path(3,10)).read())
