@@ -77,7 +77,8 @@ def extract_author_pnum(history_years,seq_authors,author_year_pnum):
 def avg_author_career_length(year,seq_authors,author_starty):
 
     if len(seq_authors)==0:
-        return [0]*len(history_years),[0]*len(history_years)
+        return 0add
+        
 
     delta_years = []
 
