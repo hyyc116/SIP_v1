@@ -79,7 +79,7 @@ class BasicDecoder(tf.keras.Model):
         ## dense用于对连续值embedding
         self._emd_fc = tf.keras.layers.Dense(self._dec_units,activation='tanh')
 
-        self._gru = gru(self._dec_units)
+        self._gru = gru_layer(self._dec_units)
 
         self._rnn_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
 

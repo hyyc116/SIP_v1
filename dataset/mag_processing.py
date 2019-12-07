@@ -294,7 +294,7 @@ def read_paper_authors(pathObj):
         #     continue
 
         ## 在这里需要的是对该作者在该领域的所有论文信息,需要保留作者1970年发表论文的记录，用于记录作者的career的长度
-        if pub_year>2016:
+        if pub_year>2018:
             continue
 
 
@@ -316,11 +316,11 @@ def plot_paper_year_dis(year_dis_path,outfig):
 
     for x in sorted(year_dis.keys(),key= lambda x:int(x)):
 
-        if int(x)<1970:
-            continue
+        # if int(x)<1970:
+        #     continue
 
-        if int(x)>2016:
-            continue
+        # if int(x)>2018:
+        #     continue
 
         xs.append(int(x))
         ys.append(year_dis[x])
@@ -600,21 +600,21 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    read_paper_ids(pathObj)
+    # read_paper_ids(pathObj)
 
-    read_paper_venue(pathObj)
+    # read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
     plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
 
-    red_ref_relations(pathObj,2016)
+    # red_ref_relations(pathObj,2016)
 
-    plot_citation_distribution(pathObj)
+    # plot_citation_distribution(pathObj)
 
-    read_paper_authors(pathObj)
+    # read_paper_authors(pathObj)
 
-    hindex_of_au_ins(pathObj)
-    venue_if(pathObj)
+    # hindex_of_au_ins(pathObj)
+    # venue_if(pathObj)
 
     logging.info('done')
 
