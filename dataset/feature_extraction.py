@@ -187,8 +187,8 @@ def extract_features(pathObj,mnlist):
             ## venue id 
             vid = pid_vid.get(pid,None)
 
-            if vid is None:
-                continue
+            # if vid is None:
+            #     continue
 
             s_features = {}
 
