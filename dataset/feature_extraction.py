@@ -184,7 +184,7 @@ def extract_features(pathObj,mnlist):
             seq_authors = pid_seq_authors[pid]
 
             ## ins的列表
-            inses = pid_inses[pid]
+            inses = pid_inses.get(pid,None)
 
             ## venue id 
             vid = pid_vid.get(pid,None)
@@ -228,7 +228,12 @@ def extract_features(pathObj,mnlist):
             s_features['a-career-length'] = avg_career_length
 
             ## 机构的平均impact facor
-            ins_avg_if = avg_ins_if(history_years,inses,ins_year_if)
+            if inses is None:
+
+                ins_avg_if = [0 for _ in history_years]
+            else:
+
+                ins_avg_if = avg_ins_if(history_years,inses,ins_year_if)
 
             s_features['i-avg-if'] = ins_avg_if
 
