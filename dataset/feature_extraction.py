@@ -46,6 +46,9 @@ def extract_citations(years,year_citnum):
 
 def extract_author_pnum(history_years,seq_authors,author_year_pnum):
 
+    if len(seq_authors)==0:
+        return [0]*len(history_years),[0]*len(history_years)
+
     ## 遍历所有作者在history_years内每年发表论文的数量
     all_pnums = []
     for i,seq in enumerate(seq_authors.keys()):
@@ -72,6 +75,9 @@ def extract_author_pnum(history_years,seq_authors,author_year_pnum):
 
 
 def avg_author_career_length(year,seq_authors,author_starty):
+
+    if len(seq_authors)==0:
+        return [0]*len(history_years),[0]*len(history_years)
 
     delta_years = []
 
