@@ -611,10 +611,10 @@ if __name__ == '__main__':
 
     plot_citation_distribution(pathObj)
 
-    # read_paper_authors(pathObj)
+    read_paper_authors(pathObj)
 
-    # hindex_of_au_ins(pathObj)
-    # venue_if(pathObj)
+    hindex_of_au_ins(pathObj)
+    venue_if(pathObj)
 
     logging.info('done')
 
