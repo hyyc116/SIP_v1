@@ -9,6 +9,9 @@ from paths import PATH
 '''
 
 def extract_hindex_features(history_years,seq_authors,author_year_hindex):
+
+    if len(seq_authors)==0:
+        return [0]*len(history_years),[0]*len(history_years)
     ## 所有作者的平均hindex
     all_hindex = []
     ## average hindex
