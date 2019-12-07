@@ -316,11 +316,11 @@ def plot_paper_year_dis(year_dis_path,outfig):
 
     for x in sorted(year_dis.keys(),key= lambda x:int(x)):
 
-        # if int(x)<1970:
-        #     continue
+        if int(x)<1950:
+            continue
 
-        # if int(x)>2018:
-        #     continue
+        if int(x)>2018:
+            continue
 
         xs.append(int(x))
         ys.append(year_dis[x])
