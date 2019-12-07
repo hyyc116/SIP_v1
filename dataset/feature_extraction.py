@@ -78,6 +78,9 @@ def avg_author_career_length(year,seq_authors,author_starty):
 
     if len(seq_authors)==0:
         return 0
+
+
+        
         
 
     delta_years = []
