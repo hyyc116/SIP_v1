@@ -286,7 +286,7 @@ if __name__ == '__main__':
 
     mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10),(10,1),(10,3),(10,5),(10,10)]
 
-    construct_datasets(pathObj,mn_list)
+    # construct_datasets(pathObj,mn_list)
     extract_features(pathObj,mn_list)
 
     
