@@ -319,7 +319,7 @@ def plot_paper_year_dis(year_dis_path,outfig):
         if int(x)<1950:
             continue
 
-        if int(x)>2018:
+        if int(x)>2017:
             continue
 
         xs.append(int(x))
