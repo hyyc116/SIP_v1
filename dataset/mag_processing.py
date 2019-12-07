@@ -605,16 +605,16 @@ if __name__ == '__main__':
     # read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
-    plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
+    # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
 
-    red_ref_relations(pathObj,2017)
+    # red_ref_relations(pathObj,2017)
 
     plot_citation_distribution(pathObj)
 
-    read_paper_authors(pathObj)
+    # read_paper_authors(pathObj)
 
-    hindex_of_au_ins(pathObj)
-    venue_if(pathObj)
+    # hindex_of_au_ins(pathObj)
+    # venue_if(pathObj)
 
     logging.info('done')
 

@@ -330,7 +330,7 @@ if __name__ == '__main__':
                 for isBidirectional in [False,True]:
 
                     for use_l2 in [True,False]:
-                        s2sm = S2SM(pathObj,m,n,modelname,feature_set=feature_set,isBidirectional=isBidirectional)
+                        s2sm = S2SM(pathObj,m,n,modelname,feature_set=feature_set,isBidirectional=isBidirectional,use_l2=use_l2)
                         s2sm.train()
 
                         time.sleep(5)
