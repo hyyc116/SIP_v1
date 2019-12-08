@@ -142,7 +142,6 @@ def read_paper_venue(pathObj):
 
     logging.info('paper venue saved to {}.'.format(pathObj._paper_venue_path))
 
-
 ## 读取引用关系，所有引用关系必须在上述id的范围内,并且控制时间在2018年之前
 def red_ref_relations(pathObj,cut_year):
 
@@ -336,9 +335,7 @@ def plot_paper_year_dis(year_dis_path,outfig):
 
     plt.title('Number of computer science papers over years')
 
-
     plt.tight_layout()
-
     plt.savefig(outfig,dpi=400)
 
     logging.info('{} papers,Fig saved to {}'.format(np.sum(ys),outfig))
