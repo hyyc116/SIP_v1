@@ -63,6 +63,9 @@ def extract_structual_info(pathObj):
 
             num_cc = len(cits)
 
+            if num_cc==0:
+                continue
+
             ## 计算n_k
             ref_citings  = []
             for ref in refs:

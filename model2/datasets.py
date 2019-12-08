@@ -6,10 +6,14 @@ from paths import PATH
 
 '''
     本文件完成数据集的抽取
+    
+    basic-structure-author
 
 '''
+
+
 ## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_RNN_datasets(pathObj,m,n,scale=True,basic_feature=False):
+def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic'):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
     validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
@@ -31,14 +35,19 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,basic_feature=False):
         feature = pid_features[pid]
 
         X = []
-        Y=[float(y) for y in feature['Y']]
+        
+        Y = [float(y) for y in feature['Y']]
 
         X.append([float(f) for f in feature['hist_cits']])
 
-        if not basic_feature:
+        ## 背景
+        X.append([float(f) for f in feature['b-num']])
+
+        if 'author' in feature_set: 
             ## 作者hindex
             X.append([float(f) for f in feature['a-first-hix']])
             X.append([float(f) for f in feature['a-avg-hix']])
+
             ## 作者文章数量
             X.append([float(f) for f in feature['a-first-pnum']])
             X.append([float(f) for f in feature['a-avg-pnum']])
@@ -47,12 +56,19 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,basic_feature=False):
             X.append([float(f) for f in feature['i-avg-if']])
             ## 期刊影响力
             X.append([float(f) for f in feature['v-if']])
-            ## 背景
-            X.append([float(f) for f in feature['b-num']])
-
+            
             ## 作者数量,静态特征也用动态表示，每年不变
             X.append([float(feature['a-num'])]*m)
             X.append([float(feature['a-career-length'])]*m)
+
+        elif 'structure' in feature_set:
+
+            X.append([float(f) for f in feature['disrupt']])
+            X.append([float(f) for f in feature['depth']])
+            X.append([float(f) for f in feature['dependence']])
+            X.append([float(f) for f in feature['anlec']])
+
+
 
         if pid in testing_ids:
             test_sorted_ids.append(pid)
@@ -77,7 +93,6 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,basic_feature=False):
 
     train_X,test_X,valid_X,dx_mean,dx_std = scale_dataset(train_X,test_X,valid_X,scale)
     train_Y,test_Y,valid_Y,y_mean,y_std = scale_dataset(train_Y,test_Y,valid_Y,scale)
-
 
     return train_X,test_X,valid_X,dx_mean,dx_std,\
             train_Y,test_Y,valid_Y,y_mean,y_std,\
