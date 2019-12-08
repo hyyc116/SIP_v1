@@ -100,7 +100,7 @@ def extract_structual_info(pathObj):
                     n_i +=1
             
             ## disruptive_score
-            disruptive_score = (n_i-n_j)/float(n_k)
+            disruptive_score = (n_i-n_j)/float(n_k+n_j+n_i)
             pid_year_disruptives[pid][year] = disruptive_score
 
             ## depth
