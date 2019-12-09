@@ -116,9 +116,10 @@ def extract_structural(history_years,year_attr):
 
     attrs = []
 
+
     for year in history_years:
 
-        attrs.append(year_attr[year])
+        attrs.append(year_attr)
 
     return attrs
 
@@ -165,7 +166,7 @@ def extract_features(pathObj,mnlist):
     ## 会议随着年份的impact factor
     venue_year_if = json.loads(open(pathObj._venue_year_if_path).read())
 
-    ## 文章对应的venue id 
+    ## 文章对应的venue id
     pid_vid = json.loads(open(pathObj._paper_venueid_path).read())
 
     ## 每年论文总数量变化
@@ -246,16 +247,16 @@ def extract_features(pathObj,mnlist):
             ## ins的列表
             inses = pid_inses.get(pid,None)
 
-            ## venue id 
+            ## venue id
             vid = pid_vid.get(pid,None)
 
             ## h index 相关特征
             his_first_hix,his_avg_hix =  extract_hindex_features(history_years,seq_authors,author_year_hindex)
             if his_first_hix is not None and his_avg_hix is not None:
-                s_features['a-first-hix'] = his_first_hix   
+                s_features['a-first-hix'] = his_first_hix
                 s_features['a-avg-hix'] = his_avg_hix
 
-            ## 文章数量相关特征 
+            ## 文章数量相关特征
             his_first_pnum,his_avg_pnum = extract_author_pnum(history_years,seq_authors,author_year_pnum)
             if his_first_pnum is not None and his_avg_pnum is not None:
                 s_features['a-first-pnum'] = his_first_pnum
@@ -326,7 +327,7 @@ if __name__ == '__main__':
     # construct_datasets(pathObj,mn_list)
     extract_features(pathObj,mn_list)
 
-    
+
 
 
 

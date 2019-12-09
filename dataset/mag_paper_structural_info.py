@@ -4,7 +4,7 @@
 
 1. disruptive score = \frac{n_i - n_j}{ n_i + n_j + n_k}
 
-2. depth 
+2. depth
 
 3. dependence
 
@@ -39,9 +39,10 @@ def extract_structual_info(pathObj):
     for pid in pid_year_cits:
 
         year_cits = pid_year_cits[pid]
+        start_year = sorted(year_cits.keys())[0]
         cits = set()
-        for year in sorted(year_cits.keys()):
-            cits = cits | year_cits[year]
+        for year in range(start_year,2018):
+            cits = cits | year_cits.get(year,set())
 
             pid_year_tcits[pid][year]  = cits
 
@@ -101,7 +102,7 @@ def extract_structual_info(pathObj):
                     n_j +=1
                 else:
                     n_i +=1
-            
+
             ## disruptive_score
             disruptive_score = (n_i-n_j)/float(n_k+n_j+n_i)
             pid_year_disruptives[pid][year] = disruptive_score
@@ -114,7 +115,7 @@ def extract_structual_info(pathObj):
 
             ## anlec就是depth
             pid_year_anlec[pid][year] = TR_citings
-            
+
     logging.info('save info.')
 
     open(pathObj._paper_year_disruptive_path,'w').write(json.dumps(pid_year_disruptives))
