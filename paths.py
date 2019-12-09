@@ -55,6 +55,15 @@ class PATH:
         ##  venue的IF随时间的变化
         self._venue_year_if_path = 'data/venue_year_if_{}.json'.format(self._field_tag)
 
+        ## 结构特征
+        self._paper_year_disruptive_path = 'data/disruptive_year_{}.json'.format(self._field_tag)
+
+        self._paper_year_depth_path = 'data/depth_year_{}.json'.format(self._field_tag)
+
+        self._paper_year_dependence_path = 'data/dependence_year_{}.json'.format(self._field_tag)
+
+        self._paper_year_anlec_path = 'data/dccps_year_{}.json'.format(self._field_tag)
+
 
         ''' ============== 图片列表 =========='''
         ### 随时间的文章数量变化曲线
