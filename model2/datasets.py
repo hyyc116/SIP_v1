@@ -11,9 +11,24 @@ from paths import PATH
 
 '''
 
+### feature-set:basic-stucture-author
+def num_tolabel(num):
+
+    if num>=341: ## 0.01
+        return 0
+    elif num >=106: ## 0.05
+        return 1
+    elif num >=56: ## 0.1
+        return 2
+    elif num >=26: ## 0.2
+        return 3
+    elif num >=9: ## 0.4
+        return 4
+    else:
+        return 5
 
 ## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic'):
+def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic',return_label=False):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
     validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
@@ -21,12 +36,15 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic'):
 
     train_X = []
     train_Y = []
+    train_L = []
 
     test_X = []
     test_Y = []
+    test_L = []
 
     valid_X = []
     valid_Y = []
+    valid_L = []
 
     test_sorted_ids = []
 
@@ -35,8 +53,10 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic'):
         feature = pid_features[pid]
 
         X = []
-        
+
         Y = [float(y) for y in feature['Y']]
+
+        L = num_tolabel(np.sum(Y)+np.sum(feature['hist_cits']))
 
         X.append([float(f) for f in feature['hist_cits']])
 
@@ -44,7 +64,16 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic'):
         X.append([float(f) for f in feature['b-num']])
 
         if 'author' in feature_set: 
-            ## 作者hindex
+            ## 作者hindex, 只保留含有这些特征的样本
+            if feature.get('a-first-hix',None) is None:
+                continue
+
+            if feature.get('i-avg-if', None) is None:
+                continue
+
+            if feature.get('v-if',None) is None:
+                continue
+
             X.append([float(f) for f in feature['a-first-hix']])
             X.append([float(f) for f in feature['a-avg-hix']])
 
@@ -68,18 +97,19 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic'):
             X.append([float(f) for f in feature['dependence']])
             X.append([float(f) for f in feature['anlec']])
 
-
-
         if pid in testing_ids:
             test_sorted_ids.append(pid)
             test_X.append(X)
             test_Y.append(Y)
+            test_L.append(L)
         elif pid in validing_ids:
             valid_X.append(X)
             valid_Y.append(Y)
+            valid_L.append(L)
         else:
             train_X.append(X)
             train_Y.append(Y)
+            train_L.append(L)
 
     ## 需要将X中的维度进行翻转
     ## 目前是 (num,10,m) 需要转换为 (num,m,10)
@@ -94,9 +124,16 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic'):
     train_X,test_X,valid_X,dx_mean,dx_std = scale_dataset(train_X,test_X,valid_X,scale)
     train_Y,test_Y,valid_Y,y_mean,y_std = scale_dataset(train_Y,test_Y,valid_Y,scale)
 
+    if return_label:
+        train_X,test_X,valid_X,dx_mean,dx_std,\
+            train_Y,test_Y,valid_Y,y_mean,y_std,\
+            train_L,test_L,valid_L,\
+            test_sorted_ids
+
     return train_X,test_X,valid_X,dx_mean,dx_std,\
             train_Y,test_Y,valid_Y,y_mean,y_std,\
             test_sorted_ids
+
 
 
 ## 归一化数据

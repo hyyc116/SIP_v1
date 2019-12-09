@@ -41,8 +41,6 @@ class S2SM:
 
         scale = True
 
-
-
         if feature_set=='basic':
             use_basic_feature = True
         else:
@@ -55,7 +53,7 @@ class S2SM:
 
         ## 数据集
         ## 超参数
-        self._units = 128
+        self._units = 256
         self._batch_sz = 512
         self._buffer_size = len(self._train_Y)
         self._n_batchs =self._buffer_size//self._batch_sz
@@ -163,7 +161,7 @@ class S2SM:
         for epoch in range(EPOCHS):
             start = time.time()
 
-            enc_hidden = self._encoder.initialize_hidden_state(self._batch_sz,isBidirectional)
+            enc_hidden = self._encoder.initialize_hidden_state(self._batch_sz,self._isBidirectional)
 
             total_loss = 0
 

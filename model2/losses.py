@@ -37,4 +37,8 @@ def regress_huber_loss(real,pred):
 
     return tf.reduce_mean(loss)
 
+def classification_loss(real,logits):
+    loss = tf.keras.losses.sparse_categorical_crossentropy(real,logits,from_logits=False)
+    return tf.reduce_mean(loss)
+
 

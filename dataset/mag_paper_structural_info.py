@@ -96,8 +96,8 @@ def extract_structual_info(pathObj):
                 TR_citings += R_citing
                 TR_citeds += R_cited
 
-                ## 如果可R_citings>0 说明都进行了引用,否者只引用了本文
-                if R_citing>0:
+                ## 如果可R_cited>0 说明都进行了引用,否者只引用了本文
+                if R_cited>0:
                     n_j +=1
                 else:
                     n_i +=1
@@ -112,7 +112,7 @@ def extract_structual_info(pathObj):
             pid_year_depths[pid][year] = depth
             pid_year_dependence[pid][year] = dependence
 
-            ## anlec就是TR_citings
+            ## anlec就是depth
             pid_year_anlec[pid][year] = TR_citings
             
     logging.info('save info.')
