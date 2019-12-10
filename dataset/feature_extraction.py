@@ -264,7 +264,7 @@ def extract_features(pathObj,mnlist):
 
             ## 作者数量
             au_num = len(seq_authors)
-            if len(au_num)!=0:
+            if au_num!=0:
                 s_features['a-num'] = au_num
 
             ## 作者的平均研究年龄
