@@ -9,10 +9,7 @@ from base_layer import gru_layer
 
 def create_decoder(name,units,dropout_rate):
 
-    if name=='basic':
-        return BasicDecoder(units,dropout_rate)
-
-    elif name=='att_decoder':
+    if 'ATT' in name:
         return AttDecoder(units,dropout_rate)
 
     else:
@@ -42,14 +39,16 @@ class AttDecoder(tf.keras.Model):
         self._fc = tf.keras.layers.Dense(1)
 
 
-    def call(self,dec_input,dec_hidden,enc_output,predict=False):
+    def call(self,dec_input,dec_hidden,enc_output,sx=None,predict=False):
 
         ## 对decoder的输入进行embedding
         dec_input = self._emd_fc(dec_input)
         ## 使用hidden state以及enc_outputs计算attention
         context_vector,weights = self._attention(dec_hidden,enc_output)
-
-        x = tf.concat([context_vector,dec_input],axis=-1)
+        if sx is None:
+            x = tf.concat([context_vector,dec_input],axis=-1)
+        else:
+            x = tf.concat([context_vector,dec_input,sx],axis=-1)
 
         if len(x.shape)==2:
             x = tf.expand_dims(x,1)
@@ -87,11 +86,14 @@ class BasicDecoder(tf.keras.Model):
         self._fc = tf.keras.layers.Dense(1)
 
 
-    def call(self,dec_input,dec_hidden,enc_output,predict=False):
+    def call(self,dec_input,dec_hidden,enc_output,sx=None,predict=False):
 
         ## 基础的Decoder,将上一步的结果与上一步的hidden state传入
         dec_input = self._emd_fc(dec_input)
-        x = tf.concat([dec_input,dec_hidden],axis=-1)
+        if sx is None:
+            x = tf.concat([dec_input,dec_hidden],axis=-1)
+        else:
+            x = tf.concat([dec_input,dec_hidden,sx],axis=-1)
 
         ## 在实际运用过程中每次deocde只进行一步
         if len(x.shape)==2:

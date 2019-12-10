@@ -36,13 +36,7 @@ class S2SM:
         self._pathObj = pathObj
 
         scale = True
-        ## 加载数据
-        self._train_dynamic_X,self._train_static_X,self._train_Y,self._test_dynamic_X,\
-        self._test_static_X,self._test_Y,self._valid_dynamic_X,self._valid_static_X,\
-        self._valid_Y,self._test_sorted_ids,self._dx_mean,self._dx_std,\
-        self._sx_mean,self._sx_std,self._y_mean,self._y_std,\
-        self._train_L,self._test_L,self._valid_L= construct_RNN_datasets(pathObj,m,n,scale)
-
+    
         self._train_X,self._test_X,self._valid_X,self._dx_mean,self._dx_std,\
         self._train_Y,self._test_Y,self._valid_Y,self._y_mean,self._y_std,\
         self._train_L,self._test_L,self._valid_L,\
@@ -59,10 +53,10 @@ class S2SM:
         self._dataset = self._dataset.batch(self._batch_sz, drop_remainder=True)
 
         self._test_buffer_size = len(self._test_Y)
-        self._n_test_batchs = self._test_buffer_size//self._batch_sz
+        self._n_test_batchs = self._test_buffer_size//self._batch_sz+1
 
         self._valid_buffer_size = len(self._valid_Y)
-        self._n_valid_batchs = self._valid_buffer_size//self._batch_sz
+        self._n_valid_batchs = self._valid_buffer_size//self._batch_sz+1
 
         self._test_dataset = tf.data.Dataset.from_tensor_slices((self._test_X,self._test_Y)).shuffle(self._test_buffer_size)
         self._test_dataset = self._test_dataset.batch(self._batch_sz, drop_remainder=False)

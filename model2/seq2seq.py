@@ -32,65 +32,85 @@ from tools import is_better_result
 
 class S2SM:
 
-    def __init__(self,pathObj,m,n,model_name='basic',feature_set='basic',isBidirectional=False,use_l2 = True):
+    def __init__(self,pathObj,m,n,scale = True,feature_set='basic',use_att=True,seperate_static=False,isBidirectional=False,use_l2 = True):
 
         ## 文件的路径
         self._pathObj = pathObj
         self._m = m
         self._n = n
 
-        scale = True
+        ## 是否对数据进行归一化 
+        self._scale = scale
+        ## 特征集合 basic-author-structure三类
+        self._feature_set = feature_set
 
-        if feature_set=='basic':
-            use_basic_feature = True
-        else:
-            use_basic_feature = False
+        ##使用attention
+        self._use_att = use_att
+
+        ## 静态变量是否直接进行串联
+        self._seperate_static = seperate_static
+
+        ## 是否使用bi-directional的GRU
+        self._isBidirectional = isBidirectional
+
+        ## 是否使用l2的weight
+        self._use_l2 = use_l2
+        if self._use_l2:
+            self._l2_weight = 0.0001
 
         ## 加载数据
-        self._train_X,self._test_X,self._valid_X,self._dx_mean,self._dx_std,\
-        self._train_Y,self._test_Y,self._valid_Y,self._y_mean,self._y_std,\
-        self._test_sorted_ids = construct_RNN_datasets(pathObj,m,n,scale,use_basic_feature)
+        if not self._seperate_static:
+            self._train_X,self._test_X,self._valid_X,self._dx_mean,self._dx_std,\
+            self._train_Y,self._test_Y,self._valid_Y,self._y_mean,self._y_std,\
+            self._test_sorted_ids = construct_RNN_datasets(pathObj,m,n,self._scale,self._feature_set)
+        else:
+            self._train_X,self._test_X,self._valid_X,self._dx_mean,self._dx_std,\
+            self._train_SX,self._test_SX,self._valid_SX,self._sx_mean,self._sx_std,\
+            self._train_Y,self._test_Y,self._valid_Y,self._y_mean,self._y_std,\
+            self._test_sorted_ids = construct_RNN_datasets(pathObj,m,n,self._scale,self._feature_set,seperate_static=self._seperate_static)
 
         ## 数据集
-        ## 超参数
-        self._units = 256
         self._batch_sz = 512
         self._buffer_size = len(self._train_Y)
         self._n_batchs =self._buffer_size//self._batch_sz
-        # self._n_batchs=10
 
-        self._test_buffer_size = len(self._test_Y)
-        self._n_test_batchs = self._test_buffer_size//self._batch_sz
-
-        self._valid_buffer_size = len(self._valid_Y)
-        self._n_valid_batchs = self._valid_buffer_size//self._batch_sz
-
-        self._dataset = tf.data.Dataset.from_tensor_slices((self._train_X,self._train_Y)).shuffle(self._buffer_size)
+        if not self._seperate_static:
+            self._dataset = tf.data.Dataset.from_tensor_slices((self._train_X,self._train_Y)).shuffle(self._buffer_size)
+        else:
+            self._dataset = tf.data.Dataset.from_tensor_slices((self._train_X,self._train_SX,self._train_Y)).shuffle(self._buffer_size)
         self._dataset = self._dataset.batch(self._batch_sz, drop_remainder=True)
 
-        self._test_dataset = tf.data.Dataset.from_tensor_slices((self._test_X,self._test_Y)).shuffle(self._test_buffer_size)
-        self._test_dataset = self._test_dataset.batch(self._batch_sz, drop_remainder=False)
+        ### test
+        self._test_buffer_size = len(self._test_Y)
+        self._n_test_batchs = self._test_buffer_size//self._batch_sz if self._test_buffer_size%self._batch_sz==0 else self._test_buffer_size//self._batch_sz+1
 
-        self._valid_dataset = tf.data.Dataset.from_tensor_slices((self._valid_X,self._valid_Y)).shuffle(self._valid_buffer_size)
-        self._valid_dataset = self._valid_dataset.batch(self._batch_sz, drop_remainder=False)
+        if not self._seperate_static:
+            self._test_dataset = tf.data.Dataset.from_tensor_slices((self._test_X,self._test_Y)).shuffle(self._buffer_size)
+        else:
+            self._test_dataset = tf.data.Dataset.from_tensor_slices((self._test_X,self._test_SX,self._test_Y)).shuffle(self._test_buffer_size)
+        self._test_dataset = self._test_dataset.batch(self._batch_sz, drop_remainder=True)
+
+
+        self._valid_buffer_size = len(self._valid_Y)
+        self._n_valid_batchs = self._valid_buffer_size//self._batch_sz if self._valid_buffer_size%self._batch_sz==0 else self._valid_buffer_size//self._batch_sz+1
+        
+        if not self._seperate_static:
+            self._valid_dataset = tf.data.Dataset.from_tensor_slices((self._valid_X,self._valid_Y)).shuffle(self._buffer_size)
+        else:
+            self._valid_dataset = tf.data.Dataset.from_tensor_slices((self._valid_X,self._valid_SX,self._valid_Y)).shuffle(self._valid_buffer_size)
+        self._valid_dataset = self._valid_dataset.batch(self._batch_sz, drop_remainder=True)
 
         ## dropout rate
         self._dropout_rate = 0.5
+        self._units = 256
+
         ## 初始化encoder以及decoder
-        self._model_name = model_name
-        self._encoder = create_encoder(self._units,self._dropout_rate,isBidirectional)
+        self._model_name = self.gen_model_name()
+
+        self._encoder = create_encoder(self._units,self._dropout_rate,self._isBidirectional)
         self._decoder = create_decoder(self._model_name,self._units,self._dropout_rate)
 
-        self._isBidirectional = isBidirectional
-
-        self._use_l2 = use_l2
-        self._l2_weight = 0.01
-
-        self._model_name = '{}-{}-{}-{}'.format(self._model_name,feature_set,'bidirect' if isBidirectional else 'single','l2' if use_l2 else 'no')
-
-        self._feature_set = feature_set
-
-        print('train model on dataset sip-m{}n{} - {} features with model {}.'.format(m,n,feature_set,self._model_name))
+        print('train model  {}.'.format(self._model_name))
 
         ## optimizer
         self._optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5,beta_2=0.9)
@@ -105,11 +125,47 @@ class S2SM:
         self._trackables['decoder']=self._decoder
         self._checkpoint = tf.train.Checkpoint(**self._trackables)
 
+    def batch_dataset(self,data_tuple,buffer_size,batch_size):
+        dataset = tf.data.Dataset.from_tensor_slices(data_tuple).shuffle(buffer_size)
+        dataset = dataset.batch(batch_sz, drop_remainder=True)
+        return dataset
+
+
+    def gen_model_name(self):
+        self._model_name = 'SIP-m{}-n{}'.format(self._m,self._n)
+
+        self._model_name += '_F-{}'.format(self._feature_set)
+
+        if self._isBidirectional:
+            self._model_name+='_Bidirect'
+        else:
+            self._model_name+='_Signle'
+
+        if self._use_att:
+            self._model_name += '_ATT'
+        else:
+            self._model_name += '_BED'
+
+        if self._seperate_static:
+            self._model_name += '_SEP'
+        else:
+            self._model_name += '_SEQ'
+
+
+        if self._use_l2:
+            self._model_name+='_L2'
+        else:
+            self._model_name+='_NO'
+
+        return self._model_name
+
+        
+
     def reload_latest_checkpoints(self):
         print('reload latest Checkpoint.....')
         self._checkpoint.restore(tf.train.latest_checkpoint(self._checkpoint_dir))
 
-    def train_step(self,X,targ,enc_hidden):
+    def train_step(self,X,targ,enc_hidden,sx=None):
 
         with tf.GradientTape() as tape:
             enc_output,enc_hidden = self._encoder(X,enc_hidden)
@@ -120,7 +176,7 @@ class S2SM:
 
             all_predictions = []
             for t in range(0,targ.shape[1]):
-                predictions,dec_hidden = self._decoder(dec_input,dec_hidden,enc_output)
+                predictions,dec_hidden = self._decoder(dec_input,dec_hidden,enc_output,sx=sx)
                 loss += regress_huber_loss(tf.expand_dims(targ[:,t],1),predictions)
 
                 all_predictions.append(predictions)
@@ -165,20 +221,27 @@ class S2SM:
 
             total_loss = 0
 
-            for (batch,(X,targ)) in enumerate(self._dataset.take(self._n_batchs)):
+            for (batch,data) in enumerate(self._dataset.take(self._n_batchs)):
 
-                batch_loss  = self.train_step(X,targ,enc_hidden)
+                if self._seperate_static:
+
+                    X,SX,targ = data
+                    batch_loss  = self.train_step(X,targ,enc_hidden,sx = SX)
+                else:
+                    X,targ = data
+                    batch_loss  = self.train_step(X,targ,enc_hidden)
+                
                 total_loss+=batch_loss
 
                 if (batch+1)%50==0 or (batch+1)==self._n_batchs:
-                    print('Model {} on sip-m{}n{}, Epoch {} Batch {}/{} Loss {:.4f}'.format(self._model_name,self._m,self._n,epoch+1,batch+1,self._n_batchs,batch_loss.numpy()))
+                    print('Model {}, Epoch {} Batch {}/{} Loss {:.4f}'.format(self._model_name,epoch+1,batch+1,self._n_batchs,batch_loss.numpy()))
 
             total_loss = total_loss/self._n_batchs
 
             ## 每一个回合结束对模型在valid上面的结果进行评价
             r2,mae,mse = self.batch_predict(self._valid_dataset,self._n_valid_batchs)
             
-            logging.info('sip-m{}n{}, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{},score:{:.3f},best_score:{:.3f}.'.format(self._m,self._n,epoch+1,total_loss,mae,mse,r2,r2/(mae+mse),best_score))
+            logging.info('Model, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{},score:{:.3f},best_score:{:.3f}.'.format(self._model_name,epoch+1,total_loss,mae,mse,r2,r2/(mae+mse),best_score))
 
             if is_better_result(mae,mse,r2,best_mae,best_mse,best_r2,best_score):
 
@@ -193,9 +256,9 @@ class S2SM:
                 ## 在验证的时候 需要对数据进行unscale
                 r2,mae,mse = self.batch_predict(self._test_dataset,self._n_test_batchs)
 
-                logging.info('sip-m{}n{}, saved model, TEST MAE:{}, MSE:{},R2:{}.'.format(self._m,self._n,mae,mse,r2))
+                logging.info('Model {}, saved model, TEST MAE:{}, MSE:{},R2:{}.'.format(self._model_name,mae,mse,r2))
 
-                test_result['summary'] = 'sip-m{}n{},{},{},{},{},{}'.format(self._m,self._n,self._model_name,self._feature_set,r2,mae,mse)
+                test_result['summary'] = '{},{},{},{}'.format(self._model_name,r2,mae,mse)
 
                 early_stop_count=0
 
@@ -223,7 +286,13 @@ class S2SM:
 
         print('Predicting, batch size: {} ...'.format(n_batchs))
         mae,mse,r2 = 0.0,0.0,0.0
-        for (batch,(X,Y)) in enumerate(dataset.take(n_batchs)):
+        for (batch,data) in enumerate(dataset.take(n_batchs)):
+
+            if not self._seperate_static:
+                X,Y = data
+                SX = None
+            else:
+                X,SX,Y = data
 
             valid_size = X.shape[0]
             # print(valid_size,X.shape,Y.shape,self._valid_Y.shape,self._valid_X.shape)
@@ -240,7 +309,7 @@ class S2SM:
             all_predictions = []
             for t in range(Y.shape[1]):
 
-                predictions,dec_hidden = self._decoder(dec_input,dec_hidden,enc_output,True)
+                predictions,dec_hidden = self._decoder(dec_input,dec_hidden,enc_output,sx = SX,predict = True)
 
                 all_predictions.append(predictions)
 
@@ -321,15 +390,16 @@ if __name__ == '__main__':
     mn_list=[(3,10),(3,5),(3,3),(3,1)]
     for m,n in mn_list:
 
-        modelnames = ['att_decoder','basic']
-        for modelname in modelnames:
-            for feature_set in ['basic','ALL']:
+        # pathObj,m,n,scale = True,feature_set='basic',use_att=False,seperate_static=False,isBidirectional=False,use_l2 = True)
+        feature_sets = ['basic-author','basic']
+        seperate_statics = [True,False]
+        isBidirectionals = [True,False]
 
-                for isBidirectional in [False,True]:
+        for feature_set in feature_sets:
 
-                    for use_l2 in [True,False]:
-                        s2sm = S2SM(pathObj,m,n,modelname,feature_set=feature_set,isBidirectional=isBidirectional,use_l2=use_l2)
-                        s2sm.train()
+            for seperate_static in seperate_statics:
 
-                        time.sleep(5)
+                for isBidirectional in isBidirectionals:
+                    s2sm = S2SM(pathObj,m,n,feature_set=feature_set,seperate_static=seperate_static,isBidirectional=isBidirectional)
 
+                    s2sm.train()

@@ -28,9 +28,7 @@ class JointModel(tf.keras.Model):
         self._encoder = create_encoder(self._units,dropout_rate = dropout_rate,isBidirectional=isBidirectional)
 
         if use_att:
-
             name = 'att_decoder'
-
         else:
             name = 'basic'
 

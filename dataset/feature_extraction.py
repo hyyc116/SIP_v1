@@ -119,7 +119,8 @@ def extract_structural(history_years,year_attr):
 
     for year in history_years:
 
-        attrs.append(year_attr)
+
+        attrs.append(year_attr[year])
 
     return attrs
 
