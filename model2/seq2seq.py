@@ -108,12 +108,12 @@ class S2SM:
         self._model_name = self.gen_model_name()
 
         self._encoder = create_encoder(self._units,self._dropout_rate,self._isBidirectional)
-        self._decoder = create_decoder(self._model_name,self._units,self._dropout_rate)
+        self._decoder = create_decoder(self._model_name,self._units,self._dropout_rate,self._seperate_static)
 
         print('train model  {}.'.format(self._model_name))
 
         ## optimizer
-        self._optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5,beta_2=0.9)
+        self._optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4,beta_2=0.9)
 
         ## 模型的保存位置
         self._checkpoint_dir = './trainning_checkpoints_{}_{}_{}'.format(self._model_name, m,n)
@@ -241,7 +241,7 @@ class S2SM:
             ## 每一个回合结束对模型在valid上面的结果进行评价
             r2,mae,mse = self.batch_predict(self._valid_dataset,self._n_valid_batchs)
             
-            logging.info('Model, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{},score:{:.3f},best_score:{:.3f}.'.format(self._model_name,epoch+1,total_loss,mae,mse,r2,r2/(mae+mse),best_score))
+            logging.info('Model {}, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{},score:{:.3f},best_score:{:.3f}.'.format(self._model_name,epoch+1,total_loss,mae,mse,r2,r2/(mae+mse),best_score))
 
             if is_better_result(mae,mse,r2,best_mae,best_mse,best_r2,best_score):
 
@@ -392,14 +392,16 @@ if __name__ == '__main__':
 
         # pathObj,m,n,scale = True,feature_set='basic',use_att=False,seperate_static=False,isBidirectional=False,use_l2 = True)
         feature_sets = ['basic-author','basic']
-        seperate_statics = [True,False]
-        isBidirectionals = [True,False]
 
         for feature_set in feature_sets:
 
-            for seperate_static in seperate_statics:
+            for seperate_static in [True,False]:
 
-                for isBidirectional in isBidirectionals:
-                    s2sm = S2SM(pathObj,m,n,feature_set=feature_set,seperate_static=seperate_static,isBidirectional=isBidirectional)
+                for isBidirectional in [False,True]:
 
-                    s2sm.train()
+                    for use_l2 in [False,True]:
+                        for use_att in [False,True]:
+                            s2sm = S2SM(pathObj,m,n,feature_set=feature_set,seperate_static=seperate_static,\
+                                isBidirectional=isBidirectional,use_l2=use_l2,use_att=use_att)
+
+                            s2sm.train()

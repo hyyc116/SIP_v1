@@ -7,19 +7,19 @@ import tensorflow as tf
 from attentions import BahdanauAttention
 from base_layer import gru_layer
 
-def create_decoder(name,units,dropout_rate):
+def create_decoder(name,units,dropout_rate,sep):
 
     if 'ATT' in name:
-        return AttDecoder(units,dropout_rate)
+        return AttDecoder(units,dropout_rate,sep)
 
     else:
         print('create basic decoder as default.')
-        return BasicDecoder(units,dropout_rate)
+        return BasicDecoder(units,dropout_rate,sep)
 
 
 class AttDecoder(tf.keras.Model):
 
-    def __init__(self,dec_units,dropout_rate=0.5):
+    def __init__(self,dec_units,dropout_rate=0.5,sep=False):
 
         super(AttDecoder,self).__init__()
 
@@ -35,6 +35,10 @@ class AttDecoder(tf.keras.Model):
         self._gru = gru_layer(self._dec_units)
         self._rnn_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
 
+        if sep:
+            self._static_fc = tf.keras.layers.Dense(self._dec_units,activation = 'sigmoid')
+            self._static_fc_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
+
         ## 回归 每一步输出一个数字
         self._fc = tf.keras.layers.Dense(1)
 
@@ -48,6 +52,11 @@ class AttDecoder(tf.keras.Model):
         if sx is None:
             x = tf.concat([context_vector,dec_input],axis=-1)
         else:
+
+            sx = self._static_fc(sx)
+            if not predict:
+                sx = self._static_fc_dropout(sx)
+
             x = tf.concat([context_vector,dec_input,sx],axis=-1)
 
         if len(x.shape)==2:
@@ -69,7 +78,7 @@ class AttDecoder(tf.keras.Model):
 
 class BasicDecoder(tf.keras.Model):
 
-    def __init__(self,dec_units,dropout_rate=0.5):
+    def __init__(self,dec_units,dropout_rate=0.5,sep=False):
 
         super(BasicDecoder,self).__init__()
 
@@ -82,6 +91,10 @@ class BasicDecoder(tf.keras.Model):
 
         self._rnn_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
 
+        if sep:
+            self._static_fc = tf.keras.layers.Dense(self._dec_units,activation = 'sigmoid')
+            self._static_fc_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
+
         ## 回归 每一步输出一个数字
         self._fc = tf.keras.layers.Dense(1)
 
@@ -93,6 +106,10 @@ class BasicDecoder(tf.keras.Model):
         if sx is None:
             x = tf.concat([dec_input,dec_hidden],axis=-1)
         else:
+            sx = self._static_fc(sx)
+            if not predict:
+                sx = self._static_fc_dropout(sx)
+
             x = tf.concat([dec_input,dec_hidden,sx],axis=-1)
 
         ## 在实际运用过程中每次deocde只进行一步

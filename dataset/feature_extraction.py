@@ -119,8 +119,7 @@ def extract_structural(history_years,year_attr):
 
     for year in history_years:
 
-
-        attrs.append(year_attr[year])
+        attrs.append(year_attr.get(year,0))
 
     return attrs
 
@@ -222,6 +221,7 @@ def extract_features(pathObj,mnlist):
             s_features['Y'] = predict_citations
 
             ## 结构特征
+            # print(pid_year_disruptives[pid],history_years)
             discruptive_scores = extract_structural(history_years,pid_year_disruptives[pid])
 
             s_features['disrupt'] = discruptive_scores
