@@ -313,7 +313,7 @@ def construct_datasets(pathObj,mn_list):
 
     for m,n in mn_list:
 
-        mn_pids = [pid for pid in reserved_pids if (2018-int(paper_year[pid]))>(m+n) and int(paper_year)>=1970]
+        mn_pids = [pid for pid in reserved_pids if (2018-int(paper_year[pid]))>(m+n) and int(paper_year[pid])>=1970]
 
         open(pathObj.dataset_id_path(m,n),'w').write('\n'.join(list(set(mn_pids))))
 
