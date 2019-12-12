@@ -134,16 +134,21 @@ def extract_features(pathObj,mnlist):
     pid_seq_authors = defaultdict(dict)
     pid_affs = defaultdict(list)
 
+    
+
+    pid_year = json.loads(open(pathObj._field_paper_year_path).read())
+
     for line in open(pathObj._paper_author_aff_path):
         paper_id,author_id,author_name,aff_id,aff_name,author_sequence_number,year = line.strip().split(',')
 
         if paper_id =='paper_id':
             continue
 
+        if pid_year[paper_id]<1970:
+            continue
+
         pid_seq_authors[paper_id][int(author_sequence_number)] = author_id
         pid_affs[paper_id].append(aff_id)
-
-    pid_year = json.loads(open(pathObj._field_paper_year_path).read())
 
     ## 加载引用次数字典
     pid_year_citnum = json.loads(open(pathObj._paper_year_citations_path).read())
@@ -307,7 +312,7 @@ def construct_datasets(pathObj,mn_list):
 
     for m,n in mn_list:
 
-        mn_pids = [pid for pid in reserved_pids if (2016-int(paper_year[pid]))>=(m+n)]
+        mn_pids = [pid for pid in reserved_pids if (2018-int(paper_year[pid]))>(m+n) and int(paper_year)>=1970]
 
         open(pathObj.dataset_id_path(m,n),'w').write('\n'.join(mn_pids))
 
@@ -325,7 +330,7 @@ if __name__ == '__main__':
 
     mn_list=[(3,1),(3,3),(3,5),(3,10),(5,1),(5,3),(5,5),(5,10),(10,1),(10,3),(10,5),(10,10)]
 
-    # construct_datasets(pathObj,mn_list)
+    construct_datasets(pathObj,mn_list)
     extract_features(pathObj,mn_list)
 
 

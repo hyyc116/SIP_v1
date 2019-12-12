@@ -56,7 +56,7 @@ class S2SM:
         ## 是否使用l2的weight
         self._use_l2 = use_l2
         if self._use_l2:
-            self._l2_weight = 0.0001
+            self._l2_weight = 0.001
 
         ## 加载数据
         if not self._seperate_static:
@@ -102,7 +102,7 @@ class S2SM:
 
         ## dropout rate
         self._dropout_rate = 0.5
-        self._units = 256
+        self._units = 128
 
         ## 初始化encoder以及decoder
         self._model_name = self.gen_model_name()
@@ -113,7 +113,7 @@ class S2SM:
         print('train model  {}.'.format(self._model_name))
 
         ## optimizer
-        self._optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4,beta_2=0.9)
+        self._optimizer = tf.keras.optimizers.Adam(learning_rate=5e-4,beta_2=0.95)
 
         ## 模型的保存位置
         self._checkpoint_dir = './trainning_checkpoints_{}_{}_{}'.format(self._model_name, m,n)
@@ -177,7 +177,7 @@ class S2SM:
             all_predictions = []
             for t in range(0,targ.shape[1]):
                 predictions,dec_hidden = self._decoder(dec_input,dec_hidden,enc_output,sx=sx)
-                loss += regress_huber_loss(tf.expand_dims(targ[:,t],1),predictions)
+                loss += regress_mse_loss(tf.expand_dims(targ[:,t],1),predictions)
 
                 all_predictions.append(predictions)
 
@@ -258,7 +258,7 @@ class S2SM:
 
                 logging.info('Model {}, saved model, TEST MAE:{}, MSE:{},R2:{}.'.format(self._model_name,mae,mse,r2))
 
-                test_result['summary'] = '{},{},{},{}'.format(self._model_name,r2,mae,mse)
+                test_result['summary'] = 'sip-m{}n{},{},{},{},{}'.format(self._m,self._n,self._model_name,r2,mae,mse)
 
                 early_stop_count=0
 
@@ -387,20 +387,17 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    mn_list=[(3,10),(3,5),(3,3),(3,1)]
+    mn_list=[(10,10),(10,5),(10,3),(10,1),(5,10),(5,5),(5,3),(5,1),(3,10),(3,5),(3,3),(3,1)]
     for m,n in mn_list:
 
         # pathObj,m,n,scale = True,feature_set='basic',use_att=False,seperate_static=False,isBidirectional=False,use_l2 = True)
-        feature_sets = ['basic-author','basic']
+        feature_sets = ['basic-author','basic-structure','basic-author-structure','basic']
 
         for feature_set in feature_sets:
-
-            for seperate_static in [True,False]:
-
-                for isBidirectional in [False,True]:
-
-                    for use_l2 in [False,True]:
-                        for use_att in [False,True]:
+            for seperate_static in [False]:
+                for isBidirectional in [True]:
+                    for use_l2 in [True]:
+                        for use_att in [True]:
                             s2sm = S2SM(pathObj,m,n,feature_set=feature_set,seperate_static=seperate_static,\
                                 isBidirectional=isBidirectional,use_l2=use_l2,use_att=use_att)
 

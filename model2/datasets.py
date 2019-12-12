@@ -28,7 +28,7 @@ def num_tolabel(num):
         return 5
 
 ## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic',return_label=False,seperate_static=False,only_all=False):
+def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic',return_label=False,seperate_static=False,only_all=True):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
     validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
@@ -56,6 +56,18 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic',return_l
 
         feature = pid_features[pid]
 
+
+        if only_all:
+            ## 作者hindex, 只保留含有这些特征的样本
+            if feature.get('a-first-hix',None) is None:
+                continue
+
+            if feature.get('i-avg-if', None) is None:
+                continue
+
+            if feature.get('v-if',None) is None:
+                continue
+
         X = []
         SX = []
 
@@ -71,18 +83,6 @@ def construct_RNN_datasets(pathObj,m,n,scale=True,feature_set = 'basic',return_l
         X.append([float(f) for f in feature['b-num']])
 
         if 'author' in feature_set: 
-
-            if only_all:
-                ## 作者hindex, 只保留含有这些特征的样本
-                if feature.get('a-first-hix',None) is None:
-                    continue
-
-                if feature.get('i-avg-if', None) is None:
-                    continue
-
-                if feature.get('v-if',None) is None:
-                    continue
-
 
             X.append([float(f) for f in feature.get('a-first-hix',[0]*m)])
             X.append([float(f) for f in feature.get('a-avg-hix',[0]*m)])

@@ -7,10 +7,10 @@ import tensorflow as tf
 from attentions import BahdanauAttention
 from base_layer import gru_layer
 
-def create_decoder(name,units,dropout_rate,sep):
+def create_decoder(name,units,dropout_rate,sep,outsize=1):
 
     if 'ATT' in name:
-        return AttDecoder(units,dropout_rate,sep)
+        return AttDecoder(units,dropout_rate,sep,outsize)
 
     else:
         print('create basic decoder as default.')
@@ -19,7 +19,7 @@ def create_decoder(name,units,dropout_rate,sep):
 
 class AttDecoder(tf.keras.Model):
 
-    def __init__(self,dec_units,dropout_rate=0.5,sep=False):
+    def __init__(self,dec_units,dropout_rate=0.5,sep=False,outsize=1):
 
         super(AttDecoder,self).__init__()
 
@@ -40,7 +40,7 @@ class AttDecoder(tf.keras.Model):
             self._static_fc_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
 
         ## 回归 每一步输出一个数字
-        self._fc = tf.keras.layers.Dense(1)
+        self._fc = tf.keras.layers.Dense(outsize)
 
 
     def call(self,dec_input,dec_hidden,enc_output,sx=None,predict=False):

@@ -10,8 +10,8 @@ from basic_config import *
 from tensorflow.keras import layers
 import tensorflow as tf
 tf.keras.backend.set_floatx('float64')
-from encoder import Encoder
-from decoder import Decoder
+from encoder import create_encoder
+from decoder import create_decoder
 
 class JointModel(tf.keras.Model):
 
@@ -28,20 +28,15 @@ class JointModel(tf.keras.Model):
         self._encoder = create_encoder(self._units,dropout_rate = dropout_rate,isBidirectional=isBidirectional)
 
         if use_att:
-            name = 'att_decoder'
+            name = 'ATT'
         else:
             name = 'basic'
 
         ## decoder进行序列解析
-        self._decoder = create_decoder(name,self._units,dropout_rate)
+        self._decoder = create_decoder(name,self._units,dropout_rate,False)
 
-        ## 加一层中间层
-        self._fc1 = tf.keras.layers.Dense(self._units,activation='sigmoid')
-        self._drp2 = tf.keras.layers.Dropout(rate=dropout_rate)
-
-        ## 进行label的预测
-        self._fc = tf.keras.layers.Dense(vocab_size)
-
+        ## classification的decoder
+        self._clas_decoder = create_decoder(name,self._units,dropout_rate,False,vocab_size)
 
     def call(self,X,Y,L,predict=False):
 
@@ -65,10 +60,7 @@ class JointModel(tf.keras.Model):
 
         regression_result = tf.concat(all_predictions,1)
 
-        ## classification
-        enc_output = tf.reshape(enc_output,(enc_output.shape[0],-1))
-        # print(enc_output.shape)
-        classification_result = self._fc(enc_output)
+        classification_result,_ = self._clas_decoder(dec_input,dec_hidden,enc_output,predict=predict)
 
         return regression_result,classification_result
 

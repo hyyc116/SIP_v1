@@ -163,10 +163,10 @@ def red_ref_relations(pathObj,cut_year):
         if progress%100000000==0:
             logging.info('progress {:}, {} ref realtions saved.'.format(progress,total_num))
 
-        if int(paper_year.get(paper_id,9999))<1950:
+        if int(paper_year.get(paper_id,9999))<1970:
             continue
 
-        if int(paper_year.get(paper_reference_id,9999))<1950:
+        if int(paper_year.get(paper_reference_id,9999))<1970:
             continue
 
         if int(paper_year.get(paper_id,9999))<=cut_year and int(paper_year.get(paper_reference_id,9999))<=cut_year:
@@ -289,10 +289,10 @@ def read_paper_authors(pathObj):
             logging.info('read author id {} ...'.format(progress))
 
         pub_year = int(paper_year.get(paper_id,9999))
-        # if pub_year > 2018 or pub_year < 1950:
+        # if pub_year > 2018 or pub_year < 1970:
         #     continue
 
-        ## 在这里需要的是对该作者在该领域的所有论文信息,需要保留作者1950年发表论文的记录，用于记录作者的career的长度
+        ## 在这里需要的是对该作者在该领域的所有论文信息,需要保留作者1970年发表论文的记录，用于记录作者的career的长度
         if pub_year>2017:
             continue
 
@@ -315,7 +315,7 @@ def plot_paper_year_dis(year_dis_path,outfig):
 
     for x in sorted(year_dis.keys(),key= lambda x:int(x)):
 
-        if int(x)<1950:
+        if int(x)<1970:
             continue
 
         if int(x)>2017:
@@ -433,9 +433,9 @@ def hindex_of_au_ins(pathObj):
         ## 这里的年份应该是从第一年到2018年
         for year in range(years[0],2018):
 
-            ## 对所有作者1950年开始计算h-index
+            ## 对所有作者1970年开始计算h-index
 
-            if year<1950:
+            if year<1970:
                 continue
 
             ## 该年及之前发表所有论文
@@ -465,7 +465,7 @@ def hindex_of_au_ins(pathObj):
     for ins_id in ins_year_paper.keys():
 
         year_papers = ins_year_paper[ins_id]
-        years = sorted([y for y in year_papers.keys() if y>=1950])
+        years = sorted([y for y in year_papers.keys() if y>=1970])
 
         if len(years)==0:
             continue
@@ -475,10 +475,10 @@ def hindex_of_au_ins(pathObj):
             ## 获得前两年发表的论文
             pids = []
 
-            if year-1>=1950:
+            if year-1>=1970:
                 pids.extend(ins_year_paper[ins_id][year-1])
 
-            if year-2>=1950:
+            if year-2>=1970:
                 pids.extend(ins_year_paper[ins_id][year-2])
 
             ## 获得前两年发表的论文在今年的引用次数
@@ -551,7 +551,7 @@ def venue_if(pathObj):
 
 
         year_papers = venue_year_paper[venue_id]
-        years = sorted([y for y in year_papers.keys() if y>=1950])
+        years = sorted([y for y in year_papers.keys() if y>=1970])
 
         if len(years)==0:
             continue
@@ -560,10 +560,10 @@ def venue_if(pathObj):
 
             pids= []
 
-            if year-1>=1950:
+            if year-1>=1970:
                 pids.extend(venue_year_paper[venue_id][year-1])
 
-            if year-2>=1950:
+            if year-2>=1970:
                 pids.extend(venue_year_paper[venue_id][year-2])
 
             ## 获得前两年发表的论文在今年的引用次数
@@ -602,16 +602,16 @@ if __name__ == '__main__':
     # read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
-    # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
+    plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
 
-    # red_ref_relations(pathObj,2017)
+    red_ref_relations(pathObj,2017)
 
     plot_citation_distribution(pathObj)
 
-    # read_paper_authors(pathObj)
+    read_paper_authors(pathObj)
 
-    # hindex_of_au_ins(pathObj)
-    # venue_if(pathObj)
+    hindex_of_au_ins(pathObj)
+    venue_if(pathObj)
 
     logging.info('done')
 

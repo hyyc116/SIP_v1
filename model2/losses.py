@@ -6,7 +6,7 @@
 import tensorflow as tf
 
 
-huber = tf.keras.losses.Huber(delta=6)
+huber = tf.keras.losses.Huber(delta=4)
 
 
 def regress_mse_loss(real,pred):

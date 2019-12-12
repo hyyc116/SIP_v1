@@ -67,8 +67,6 @@ def train_RFR(train_X,train_Y):
 
     return models
 
-
-
 ##评测模型
 def evaluate_model(models,test_X,test_Y):
 
@@ -86,7 +84,7 @@ def evaluate_model(models,test_X,test_Y):
     return r2_score(test_Y, predict_Y, multioutput='variance_weighted'),mean_absolute_error(test_Y, predict_Y),mean_squared_error(test_Y, predict_Y),predict_Y
 
 
-def train_and_evaluate(pathObj,mn_list,scale=False,basic_feature=True):
+def train_and_evaluate(pathObj,mn_list,scale=False,feature_set='basic'):
 
     ## m n list
     lines = ['dataset,model,r2,mae,mse']
@@ -94,29 +92,32 @@ def train_and_evaluate(pathObj,mn_list,scale=False,basic_feature=True):
     for m,n in mn_list:
         dataset = 'sip-m{}n{}'.format(m,n)
         logging.info('train dataset sip-m{}n{} ..'.format(m,n))
-        train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids,_,_,_ = construct_datasets(pathObj,m,n,scale=scale,basic_feature=basic_feature)
+        train_X,train_Y,test_X,test_Y,valid_X,valid_Y,test_sorted_ids,_,_,_ = construct_datasets(pathObj,m,n,scale=scale,feature_set=feature_set)
         
         shallow_result[dataset]['IDS'] = test_sorted_ids
 
         # print(train_X[:2])
         # print(train_Y[:2])
 
+        model_name = 'RFR-{}'.format(feature_set)
+
         models = train_RFR(train_X,train_Y)
         r2,mae,mse,predict_Y =evaluate_model(models,test_X,test_Y)
 
-        shallow_result[dataset]['RFR']=predict_Y
+        shallow_result[dataset][model_name]=predict_Y
 
-        print('RFR====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+        print('{}====R^2:{},MAE:{},MSE:{}'.format(model_name,r2,mae,mse))
 
-        lines.append('sip-m{}n{},{},{},{},{}'.format(m,n,'RFR',r2,mae,mse))
+        lines.append('sip-m{}n{},{},{},{},{}'.format(m,n,model_name,r2,mae,mse))
 
         models = train_Linear(train_X,train_Y)
+        model_name = 'LR-{}'.format(feature_set)
         r2,mae,mse,predict_Y =evaluate_model(models,test_X,test_Y)
-        shallow_result[dataset]['LR']=predict_Y
+        shallow_result[dataset][model_name]=predict_Y
 
-        lines.append('sip-m{}n{},{},{},{},{}'.format(m,n,'LR',r2,mae,mse))
+        lines.append('sip-m{}n{},{},{},{},{}'.format(m,n,model_name,r2,mae,mse))
 
-        print('Linear====R^2:{},MAE:{},MSE:{}'.format(r2,mae,mse))
+        print('{}====R^2:{},MAE:{},MSE:{}'.format(model_name,r2,mae,mse))
 
     open(pathObj._shallow_result_summary,'a').write('\n'.join(lines))
 
@@ -157,9 +158,17 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    mn_list=[(3,1),(3,3),(3,5),(3,10)]
+    mn_list=[(10,1),(10,3),(10,5),(10,10),(5,1),(5,3),(5,5),(5,10),(3,1),(3,3),(3,5),(3,10)]
 
     train_and_evaluate(pathObj,mn_list)
+
+    train_and_evaluate(pathObj,mn_list,feature_set='basic-author')
+
+    train_and_evaluate(pathObj,mn_list,feature_set='basic-structure')
+
+    train_and_evaluate(pathObj,mn_list,feature_set='basic-author-structure')
+
+
 
     # for m,n in mn_list:
         # test_zero(pathObj,m,n)

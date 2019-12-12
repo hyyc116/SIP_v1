@@ -19,8 +19,6 @@ from sklearn.metrics import mean_squared_error
 tf.keras.backend.set_floatx('float64')
 from datasets import construct_RNN_datasets
 from dataset.datasets_construction import unscale_dataset
-from encoder import Encoder
-from decoder import Decoder
 from joint_model import JointModel
 from losses import regress_mse_loss
 from losses import classification_loss
@@ -29,7 +27,7 @@ from tools import is_better_result
 
 class S2SM:
 
-    def __init__(self,pathObj,m,n,beta1=5,beta2=1):
+    def __init__(self,pathObj,m,n,beta1=10,beta2=1):
 
         self._m = m
         self._n = n
@@ -40,7 +38,7 @@ class S2SM:
         self._train_X,self._test_X,self._valid_X,self._dx_mean,self._dx_std,\
         self._train_Y,self._test_Y,self._valid_Y,self._y_mean,self._y_std,\
         self._train_L,self._test_L,self._valid_L,\
-        self._test_sorted_ids =construct_RNN_datasets(pathObj,m,n,scale)
+        self._test_sorted_ids =construct_RNN_datasets(pathObj,m,n,scale,return_label=True,feature_set='basic_structure')
 
         ## 数据集
         ## 超参数
@@ -49,7 +47,7 @@ class S2SM:
         self._buffer_size = len(self._train_Y)
         self._n_batchs =self._buffer_size//self._batch_sz
 
-        self._dataset = tf.data.Dataset.from_tensor_slices((self._train_dynamic_X,self._train_static_X,self._train_Y,self._train_L)).shuffle(self._buffer_size)
+        self._dataset = tf.data.Dataset.from_tensor_slices((self._train_X,self._train_Y,self._train_L)).shuffle(self._buffer_size)
         self._dataset = self._dataset.batch(self._batch_sz, drop_remainder=True)
 
         self._test_buffer_size = len(self._test_Y)
@@ -58,10 +56,10 @@ class S2SM:
         self._valid_buffer_size = len(self._valid_Y)
         self._n_valid_batchs = self._valid_buffer_size//self._batch_sz+1
 
-        self._test_dataset = tf.data.Dataset.from_tensor_slices((self._test_X,self._test_Y)).shuffle(self._test_buffer_size)
+        self._test_dataset = tf.data.Dataset.from_tensor_slices((self._test_X,self._test_Y,self._test_L)).shuffle(self._test_buffer_size)
         self._test_dataset = self._test_dataset.batch(self._batch_sz, drop_remainder=False)
 
-        self._valid_dataset = tf.data.Dataset.from_tensor_slices((self._valid_X,self._valid_Y)).shuffle(self._valid_buffer_size)
+        self._valid_dataset = tf.data.Dataset.from_tensor_slices((self._valid_X,self._valid_Y,self._valid_L)).shuffle(self._valid_buffer_size)
         self._valid_dataset = self._valid_dataset.batch(self._batch_sz, drop_remainder=False)
 
         
@@ -82,7 +80,7 @@ class S2SM:
         self._beta2 = beta2
 
         ## optimizer
-        self._optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5)
+        self._optimizer = tf.keras.optimizers.Adam(learning_rate=5e-4,beta_2=0.95)
 
         ## 模型的保存位置
         self._checkpoint_dir = './trainning_checkpoints_{}_{}_{}'.format(self._model_name, m,n)
@@ -159,7 +157,7 @@ class S2SM:
             ### 在实际的使用中并不能保存下最好的模型，
             ### 我们需要使用三个评价指标共同完成
             ### mae mse的前三位小数相同，并且r2更大
-            if epoch>1 and is_better_result(mae,mse,r2,best_score,best_r2,best_mse,best_mae):
+            if epoch>1 and is_better_result(mae,mse,r2,best_mae,best_mse,best_r2,best_score):
 
                 best_mae = mae if mae<best_mae else best_mae
                 best_mse = mse if mse<best_mse else best_mse
@@ -204,9 +202,9 @@ class S2SM:
         mae = 0
         mse = 0
         acc = 0
-        for (batch,(X,targ,L)) in enumerate(dataset.take(n_batchs)):
+        for (batch,(X,Y,L)) in enumerate(dataset.take(n_batchs)):
             ## validation set 进行验证
-            regression_result,classification_result = self._model(dynamic_X,static_X,Y,L,True)
+            regression_result,classification_result = self._model(X,Y,L,True)
 
             Y = unscale_dataset(Y,self._y_mean,self._y_std)
             all_predictions = unscale_dataset(regression_result,self._y_mean,self._y_std)
@@ -217,6 +215,7 @@ class S2SM:
             mse += mean_squared_error(Y, all_predictions)
 
             m = tf.keras.metrics.SparseCategoricalAccuracy()
+            m.update_state(L,classification_result)
 
             acc += m.result().numpy()
 
@@ -237,13 +236,13 @@ if __name__ == '__main__':
 
     # mn_list=[(5,10),(3,10),(3,5),(5,5),(5,3),(3,3),(5,1),(3,1)(3,10),(3,5),]
 
-    mn_list=[(3,3),(3,1)]
+    mn_list=[(10,10),(3,1)]
     # mn_list = [(3,3)]
     for m,n in mn_list:
 
-        for beta1,beta2 in [(5,1),(5,5),(1,5),(10,1),(1,10)]:
-            s2sm = S2SM(pathObj,m,n,beta1,beta2)
-            s2sm.train()
+        
+        s2sm = S2SM(pathObj,m,n)
+        s2sm.train()
 
-            time.sleep(5)
+        time.sleep(5)
 

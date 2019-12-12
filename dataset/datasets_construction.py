@@ -10,17 +10,36 @@ from paths import PATH
 
 '''
 
-## 统一所有数据集的测试集以及验证集，从sip-m5n10中随机抽取1000篇作为验证集，10000篇作为测试集。
+## 统一所有数据集的测试集以及验证集，从sip-m10n10中随机抽取10000篇作为验证集，10000篇作为测试集。
 def get_test_valid_set_ids(pathObj):
-    pid_features = json.loads(open(pathObj.dataset_feature_path(3,10)).read())
+    pid_features = json.loads(open(pathObj.dataset_feature_path(10,10)).read())
 
-    pids = list(pid_features.keys())
+    pids = []
+
+    for pid in pid_features.keys():
+
+        ## 将所有的特征串联起来
+        feature = pid_features[pid]
+
+        ## 作者hindex, 只保留含有这些特征的样本
+        if feature.get('a-first-hix',None) is None:
+            continue
+
+        if feature.get('i-avg-if', None) is None:
+            continue
+
+        if feature.get('v-if',None) is None:
+            continue
+
+        pids.append(pid)
+
+    logging.info('number of ids {}.'.format(len(pids)))
 
     # test_percent = 0.4
-    test_num = 30000
-    valid_num = int(test_num/3)
+    test_num = 80000
+    valid_num = int(test_num/4)
 
-    ## 选择11000个作为测试验证机和
+    ## 选择11000个作为测试验证机和 
     selected_pids =  np.random.choice(pids,test_num,replace=False)
 
     valid_pids = np.random.choice(selected_pids,valid_num,replace=False)
@@ -252,7 +271,7 @@ def plot_ydis(y_dis,m,n):
     plt.savefig('data/y_dis_{}_{}.png'.format(m,n),dpi=300)
 
 ## 首先抽取特征,根据数据集构建训练集，测试集
-def construct_shallow_datasets(pathObj,m,n,scale=True,basic_feature=False):
+def construct_shallow_datasets(pathObj,m,n,scale=True,feature_set ='basic',only_all=True):
 
     testing_ids = set(pathObj.read_file(pathObj._testing_pid_path))
     validing_ids = set(pathObj.read_file(pathObj._validing_pid_path))
@@ -279,6 +298,18 @@ def construct_shallow_datasets(pathObj,m,n,scale=True,basic_feature=False):
         ## 将所有的特征串联起来
         feature = pid_features[pid]
 
+
+        if only_all:
+            ## 作者hindex, 只保留含有这些特征的样本
+            if feature.get('a-first-hix',None) is None:
+                continue
+
+            if feature.get('i-avg-if', None) is None:
+                continue
+
+            if feature.get('v-if',None) is None:
+                continue
+
         X=[]
         Y=[float(y) for y in feature['Y']]
 
@@ -286,22 +317,46 @@ def construct_shallow_datasets(pathObj,m,n,scale=True,basic_feature=False):
 
         ##文章被引用的历史
         X.extend(feature['hist_cits'])
-        if not basic_feature:
-            ## 作者hindex
-            X.extend(feature['a-first-hix'])
-            X.extend(feature['a-avg-hix'])
+        # if not feature_set :'basic'    #     ## 作者hindex
+        #     X.extend(feature['a-first-hix'])
+        #     X.extend(feature['a-avg-hix'])
+        #     ## 作者文章数量
+        #     X.extend(feature['a-first-pnum'])
+        #     X.extend(feature['a-avg-pnum'])
+        #     ## 作者数量
+        #     X.append(feature['a-num'])
+        #     X.append(feature['a-career-length'])
+        #     ## 机构影响力 
+        #     X.extend(feature['i-avg-if'])
+        #     ## 期刊影响力
+        #     X.extend(feature['v-if'])
+        #     ## 背景
+        #     X.extend(feature['b-num'])
+
+        if 'author' in feature_set: 
+
+            X.extend([float(f) for f in feature['a-first-hix']])
+            X.extend([float(f) for f in feature.get('a-avg-hix',[0]*m)])
+
             ## 作者文章数量
-            X.extend(feature['a-first-pnum'])
-            X.extend(feature['a-avg-pnum'])
-            ## 作者数量
-            X.append(feature['a-num'])
-            X.append(feature['a-career-length'])
+            X.extend([float(f) for f in feature.get('a-first-pnum',[0]*m)])
+            X.extend([float(f) for f in feature.get('a-avg-pnum',[0]*m)])
+            
             ## 机构影响力 
-            X.extend(feature['i-avg-if'])
+            X.extend([float(f) for f in feature.get('i-avg-if',[0]*m)])
             ## 期刊影响力
-            X.extend(feature['v-if'])
-            ## 背景
-            X.extend(feature['b-num'])
+            X.extend([float(f) for f in feature.get('v-if',[0]*m)])
+            
+            ## 作者数量,静态特征也用动态表示，每年不变
+            X.append(feature.get('a-num',0))
+            X.append(feature.get('a-career-length',0))
+
+        elif 'structure' in feature_set:
+
+            X.extend([float(f) for f in feature['disrupt']])
+            X.extend([float(f) for f in feature['depth']])
+            X.extend([float(f) for f in feature['dependence']])
+            X.extend([float(f) for f in feature['anlec']])
 
         X = [float(x) for x in X]
 
