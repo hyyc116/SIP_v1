@@ -188,10 +188,11 @@ def extract_features(pathObj,mnlist):
 
     for m,n in mnlist:
         ## paper ids in datasets
-        dataset_ids = [line.strip() for line in open(pathObj.dataset_id_path(m,n))]
-        logging.info('{} papers in datasets reserved loaded.'.format(len(dataset_ids)))
+        dataset_ids = list(set([line.strip() for line in open(pathObj.dataset_id_path(m,n))]))
 
-        logging.info('{} papers with venue and aff.'.format(len(pidset_with_aff&pidset_with_vid&set(dataset_ids))))
+        datawith_author_venue = pidset_with_aff&pidset_with_vid&set(dataset_ids)
+
+        logging.info('{} papers in datasets reserved loaded,{} with venue and aff.'.format(len(dataset_ids),len(datawith_author_venue)))
 
         ## 论文ID对应特征值
         pid_features = {}
@@ -314,7 +315,7 @@ def construct_datasets(pathObj,mn_list):
 
         mn_pids = [pid for pid in reserved_pids if (2018-int(paper_year[pid]))>(m+n) and int(paper_year)>=1970]
 
-        open(pathObj.dataset_id_path(m,n),'w').write('\n'.join(mn_pids))
+        open(pathObj.dataset_id_path(m,n),'w').write('\n'.join(list(set(mn_pids))))
 
         logging.info('{} papers in dataset sip-m{}n{}.'.format(len(mn_pids),m,n))
 
