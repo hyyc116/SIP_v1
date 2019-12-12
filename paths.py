@@ -18,6 +18,10 @@ class PATH:
         ## 存储参考关系的文件地址
         self._paper_ref_relation_path = 'data/paper_ref_relations_{}.txt'.format(self._field_tag)
 
+        self._paper_cit_num_dis_path = 'data/paper_cit_num_dis_{}.json'.format(self._field_tag)
+
+        self._paper_max_interval_path = 'data/paper_max_interval_dis_{}.json'.format(self._field_tag)
+
         ## 文章数量随时间的变化数据统计
         self._field_paper_num_dis_path = 'data/paper_num_dis_{}.txt'.format(self._field_tag)
 

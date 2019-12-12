@@ -1,4 +1,6 @@
-python dataset/mag_paper_structural_info.py > logs/structure.log
+python dataset/mag_processing.py
 
-python dataset/feature_extraction.py > logs/feature.log
+python dataset/mag_paper_structural_info.py
+
+python dataset/feature_extraction.py
 

@@ -61,7 +61,7 @@ def read_paper_ids(pathObj):
 
     query_op = dbop()
 
-    sql = "select mag_core.paper_fields_of_study.paper_id from mag_core.paper_fields_of_study, mag_core.fields_of_study where mag_core.paper_fields_of_study.field_of_study_id = mag_core.fields_of_study.field_of_study_id and mag_core.fields_of_study.field_of_study_id='41008148' "
+    sql = "select mag_core.paper_fields_of_study.paper_id from mag_core.paper_fields_of_study where mag_core.paper_fields_of_study.field_of_study_id ='41008148' and mag_core.paper_fields_of_study.score>0.3"
     progress = 0
 
     paper_ids = []
@@ -156,6 +156,9 @@ def red_ref_relations(pathObj,cut_year):
     total_num = 0
 
     progress = 0
+    pid_citnum = defaultdict(int)
+
+    pid_max_length = defaultdict(list)
     for paper_id,paper_reference_id in query_op.query_database(sql):
 
         progress+=1
@@ -173,6 +176,10 @@ def red_ref_relations(pathObj,cut_year):
             cit_relation = '{},{}'.format(paper_id,paper_reference_id)
             cit_relations.append(cit_relation)
 
+            pid_citnum[paper_reference_id]+=1
+
+            pid_max_length[paper_reference_id].append(int(paper_year[paper_id])-int(paper_year[paper_reference_id]))
+
             ## 每100万条存储一次
             if len(cit_relations)%10000000==0:
                 ref_relation_file.write('\n'.join(cit_relations)+'\n')
@@ -186,37 +193,21 @@ def red_ref_relations(pathObj,cut_year):
     ref_relation_file.close()
     logging.info('{} ref relations saved to {}'.format(total_num,pathObj._paper_ref_relation_path))
 
+    open(pathObj._paper_cit_num_dis_path,'w').write(json.dumps(pid_citnum))
+    logging.info('paper cit num saved to {}.'.format(pathObj._paper_cit_num_dis_path))
+
+    open(pathObj._paper_max_interval_path,'w').write(json.dumps(pid_max_length))
+    logging.info('paper max inerval saved to {}.'.format(pathObj._paper_max_interval_path))
+
 def plot_citation_distribution(pathObj):
 
-    paper_year = json.loads(open(pathObj._field_paper_year_path).read())
+    pid_citnum = json.loads(open(pathObj._paper_cit_num_dis_path).read())
 
-    pid_citnum = defaultdict(int)
-    pids = []
-
-    pid_intervals = defaultdict(list)
-    for line in open(pathObj._paper_ref_relation_path):
-
-        line = line.strip()
-
-        citing_pid,cited_pid = line.split(',')
-
-        pid_citnum[cited_pid]+=1
-
-        citing_year = int(paper_year[citing_pid])
-        cited_year = int(paper_year[cited_pid])
-
-        interval = citing_year-cited_year
-
-        pid_intervals[cited_pid].append(interval)
-
-        pids.append(citing_pid)
-        pids.append(cited_pid)
-
-    logging.info('{} papers published till 2018,{} papers has citations.'.format(len(set(pids)),len(pid_citnum)))
+    pid_intervals = json.loads(open(pathObj._paper_max_interval_path).read())
+    
 
     xs = []
     ys = []
-
     ## 根据文章的论文被引次数，来获取分界值
     cits_list = sorted(pid_citnum.values(),reverse=True)
     total = float(len(cits_list))
@@ -258,7 +249,7 @@ def plot_citation_distribution(pathObj):
 
         num = pid_citnum[pid]
 
-        if max_interval<5 or num<5:
+        if max_interval<4 or num<4:
             continue
 
         reserved_pids.append(pid)
@@ -597,9 +588,9 @@ if __name__ == '__main__':
 
     pathObj = PATH(field,tag)
 
-    # read_paper_ids(pathObj)
+    read_paper_ids(pathObj)
 
-    # read_paper_venue(pathObj)
+    read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
     plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
