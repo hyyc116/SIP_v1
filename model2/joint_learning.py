@@ -122,10 +122,10 @@ class S2SM:
         EPOCHS = 1000
 
         early_stop_count = 0
-        best_mae = 100
+        # best_mae = 100
         best_mse = 100
-        best_r2 =0
-        best_score = 0
+        # best_r2 =0
+        # best_score = 0
 
         test_result = {}
 
@@ -157,13 +157,13 @@ class S2SM:
             ### 在实际的使用中并不能保存下最好的模型，
             ### 我们需要使用三个评价指标共同完成
             ### mae mse的前三位小数相同，并且r2更大
-            if epoch>1 and is_better_result(mae,mse,r2,best_mae,best_mse,best_r2,best_score):
+            if epoch>1 and is_better_result(mse,best_mse):
 
-                best_mae = mae if mae<best_mae else best_mae
+                # best_mae = mae if mae<best_mae else best_mae
                 best_mse = mse if mse<best_mse else best_mse
-                best_r2 = r2 if r2>best_r2 else best_r2
+                # best_r2 = r2 if r2>best_r2 else best_r2
 
-                best_score = r2/(mae+mse)
+                # best_score = r2/(mae+mse)
 
                 self._checkpoint.save(file_prefix = self._checkpoint_prefix)
                 ## 使用保存的模型对test数据进行验证
@@ -236,7 +236,7 @@ if __name__ == '__main__':
 
     # mn_list=[(5,10),(3,10),(3,5),(5,5),(5,3),(3,3),(5,1),(3,1)(3,10),(3,5),]
 
-    mn_list=[(10,10),(3,1)]
+    mn_list=[(10,10),(10,5),(10,3),(10,1),(5,10),(5,5),(5,3),(5,1),(3,10),(3,5),(3,3),(3,1)]
     # mn_list = [(3,3)]
     for m,n in mn_list:
 

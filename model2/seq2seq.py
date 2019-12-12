@@ -208,9 +208,9 @@ class S2SM:
         EPOCHS = 1000
 
         early_stop_count = 0
-        best_score = 0
-        best_r2 = 0
-        best_mae = 100
+        # best_score = 0
+        # best_r2 = 0
+        # best_mae = 100
         best_mse = 1000
 
         test_result = {}
@@ -241,15 +241,15 @@ class S2SM:
             ## 每一个回合结束对模型在valid上面的结果进行评价
             r2,mae,mse = self.batch_predict(self._valid_dataset,self._n_valid_batchs)
             
-            logging.info('Model {}, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{},score:{:.3f},best_score:{:.3f}.'.format(self._model_name,epoch+1,total_loss,mae,mse,r2,r2/(mae+mse),best_score))
+            logging.info('Model {}, Epoch {}, training Loss {:.4f},validation mae:{}, mse:{},r2:{}.'.format(self._model_name,epoch+1,total_loss,mae,mse,r2))
 
-            if is_better_result(mae,mse,r2,best_mae,best_mse,best_r2,best_score):
+            if is_better_result(mse,best_mse):
 
-                best_mae = mae if mae<best_mae else best_mae
+                # best_mae = mae if mae<best_mae else best_mae
                 best_mse = mse if mse<best_mse else best_mse
-                best_r2 = r2 if r2>best_r2 else best_r2
+                # best_r2 = r2 if r2>best_r2 else best_r2
 
-                best_score = r2/(mae+mse)
+                # best_score = r2/(mae+mse)
 
                 self._checkpoint.save(file_prefix = self._checkpoint_prefix)
                 ## 使用保存的模型对test数据进行验证

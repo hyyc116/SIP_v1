@@ -148,7 +148,7 @@ def red_ref_relations(pathObj,cut_year):
     ##目标ID列表
     paper_year = pathObj.paper_year
     ## 参考关系存放文件
-    ref_relation_file = open(pathObj._paper_ref_relation_path,'a+')
+    ref_relation_file = open(pathObj._paper_ref_relation_path,'w')
 
     sql = 'select paper_id,paper_reference_id from mag_core.paper_references'
     cit_relations = []
@@ -586,23 +586,23 @@ if __name__ == '__main__':
     field = 'computer science'
     tag = 'cs'
 
-    pathObj = PATH(field,tag)
+    # pathObj = PATH(field,tag)
 
-    read_paper_ids(pathObj)
+    # read_paper_ids(pathObj)
 
-    read_paper_venue(pathObj)
+    # read_paper_venue(pathObj)
 
      ## 画出数量随时间变化曲线
-    plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
+    # plot_paper_year_dis(pathObj._field_paper_num_dis_path,pathObj._field_paper_num_dis_over_time_fig)
 
     red_ref_relations(pathObj,2017)
 
-    plot_citation_distribution(pathObj)
+    # plot_citation_distribution(pathObj)
 
-    read_paper_authors(pathObj)
+    # read_paper_authors(pathObj)
 
-    hindex_of_au_ins(pathObj)
-    venue_if(pathObj)
+    # hindex_of_au_ins(pathObj)
+    # venue_if(pathObj)
 
     logging.info('done')
 
