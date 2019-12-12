@@ -586,7 +586,7 @@ if __name__ == '__main__':
     field = 'computer science'
     tag = 'cs'
 
-    # pathObj = PATH(field,tag)
+    pathObj = PATH(field,tag)
 
     # read_paper_ids(pathObj)
 
